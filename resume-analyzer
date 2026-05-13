@@ -758,7 +758,7 @@
 </head>
 <body>
 
-<div class="ra-wrap">
+<div class="ra-wrap" id="ra-root">
 
     <!-- Header -->
     <div class="ra-header">
@@ -2025,6 +2025,25 @@ function warnIconSm()  { return `<svg ${smIconAttrs}><line x1="12" y1="8" x2="12
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 initAuth();
+
+// ── iframe height reporting ───────────────────────────────────────────────────
+// Posts current document height to parent Webflow page so the iframe
+// can resize to fit content rather than scroll internally.
+function postHeight() {
+    const h = document.documentElement.scrollHeight;
+    window.parent.postMessage({ type: 'ra-resize', height: h }, '*');
+}
+
+// Fire on load
+window.addEventListener('load', postHeight);
+
+// Fire whenever DOM size might change — use ResizeObserver on the wrap div
+if (typeof ResizeObserver !== 'undefined') {
+    new ResizeObserver(postHeight).observe(document.getElementById('ra-root') || document.body);
+} else {
+    // Fallback for older browsers
+    window.addEventListener('resize', postHeight);
+}
 
 })();
 </script>
