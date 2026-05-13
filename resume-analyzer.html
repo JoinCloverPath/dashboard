@@ -1054,7 +1054,7 @@ submitBtn.addEventListener('click', async () => {
 
     try {
         await stepActive(0);
-        const rawText = await extractText(selectedFile);
+        const rawText = cleanText(await extractText(selectedFile));
 
         await stepActive(1);
         const sections = detectSections(rawText);
@@ -1104,6 +1104,33 @@ async function stepActive(i) {
     await delay(220);
 }
 function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  TEXT CLEANING
+// ═══════════════════════════════════════════════════════════════════════════════
+function cleanText(raw) {
+    return raw
+        // Remove non-printable / control characters (keep newlines and tabs)
+        .replace(/[^\x09\x0A\x0D\x20-\x7E\u00A0-\u024F]/g, ' ')
+        // Remove lines that are clearly PDF artifacts:
+        // - lines with 3 or fewer characters
+        // - lines that are purely numeric (page numbers, encoding IDs)
+        // - lines that are purely symbolic / no letters at all
+        .split('\n')
+        .filter(line => {
+            const t = line.trim();
+            if (t.length <= 3) return false;
+            if (/^\d+$/.test(t)) return false;
+            if (!/[a-zA-Z]/.test(t)) return false;
+            return true;
+        })
+        .join('\n')
+        // Collapse runs of 3+ spaces into a single space
+        .replace(/ {3,}/g, ' ')
+        // Collapse 3+ consecutive newlines into two
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  TEXT EXTRACTION
