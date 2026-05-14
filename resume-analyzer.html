@@ -1509,20 +1509,6 @@ function auditATS(text, sections, file) {
             : 'Could not detect standardized dates (e.g. "Jan 2022 – Mar 2024"). ATS systems parse dates to rank recency.'
     });
 
-    // 5. Length / density
-    const wordCount = text.split(/\s+/).filter(Boolean).length;
-    let lengthStatus = 'pass', lengthDesc = '';
-    if (wordCount < 200) {
-        lengthStatus = 'fail';
-        lengthDesc = `Only ~${wordCount} words detected. A resume this short won't survive ATS keyword filtering.`;
-    } else if (wordCount > 1200) {
-        lengthStatus = 'warn';
-        lengthDesc = `~${wordCount} words is on the longer side. Consider trimming to 1 page for early-career or 2 pages for senior roles.`;
-    } else {
-        lengthDesc = `~${wordCount} words — solid density for ATS parsing.`;
-    }
-    items.push({ label: 'Content length', status: lengthStatus, desc: lengthDesc });
-
     // 6. Special characters / encoding issues
     const hasSpecialChars = /[^\x00-\x7F]{5,}/.test(text);
     const hasBoxChars = /[\u2500-\u257F\u2580-\u259F\u25A0-\u25FF]/.test(text);
@@ -1546,8 +1532,9 @@ function auditATS(text, sections, file) {
             : 'No obvious multi-column layout detected.'
     });
 
-    // 8. Graphics / images (can't detect from text, but PDF-extracted text that's very sparse suggests it)
-    const imageHeavy = ext === 'pdf' && wordCount < 100;
+    // 8. Graphics / images — detect by very low character-to-page ratio
+    const charCount = text.replace(/\s/g, '').length;
+    const imageHeavy = ext === 'pdf' && charCount < 200;
     items.push({
         label: 'Image / graphic content',
         status: imageHeavy ? 'fail' : 'pass',
