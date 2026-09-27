@@ -1,0 +1,1653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CloverPath Employer Relations</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --cp-green: #008208;
+      --cp-green-light: #7bbc00;
+      --cp-forest: #0f3d1e;
+      --cp-cream: #f7f5f0;
+      --cp-ink: #16211a;
+      --cp-muted: #5f6b62;
+      --cp-line: #e4e0d6;
+      --cp-card: #ffffff;
+      --cp-green-tint: #eef5ee;
+      --cp-amber: #b7791f;
+      --cp-amber-tint: #fbf3e3;
+      --cp-red: #b4453a;
+      --cp-red-tint: #fbeeec;
+      --cp-slate: #3a4a55;
+      --cp-slate-tint: #eef1f4;
+    }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--cp-cream); color: var(--cp-ink); -webkit-font-smoothing: antialiased; }
+    html, body { height: 100%; min-height: 100%; margin: 0; padding: 0; background: var(--cp-cream); }
+
+    /* Topbar */
+    .topbar { position: fixed; top: 0; left: 0; right: 0; height: 64px; background: #fff; border-bottom: 1px solid #e4e0d6; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; z-index: 1000; }
+    .topbar-left { display: flex; align-items: center; gap: 16px; }
+    .mobile-menu-btn { display: none; background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; }
+    .mobile-menu-btn:hover { background: #faf8f3; }
+    .mobile-menu-btn svg { width: 24px; height: 24px; stroke: #5f6b62; fill: none; stroke-width: 2; }
+    .topbar-logo { height: 36px; }
+    .admin-badge { font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 4px; background: linear-gradient(135deg, #008208, #00a00a); color: #fff; text-transform: uppercase; letter-spacing: 0.5px; }
+    .topbar-right { display: flex; align-items: center; gap: 8px; }
+    .profile-dropdown { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 6px 10px; border-radius: 8px; border: 1px solid transparent; position: relative; }
+    .profile-dropdown:hover { background: #faf8f3; border-color: #e4e0d6; }
+    .profile-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #008208, #00a00a); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
+    .profile-info { display: flex; flex-direction: column; }
+    .profile-name { font-size: 14px; color: #16211a; font-weight: 600; }
+    .profile-role { font-size: 12px; color: #5f6b62; }
+
+    /* Layout */
+    .layout { display: flex; padding-top: 64px; min-height: 100vh; }
+    .sidebar { position: fixed; left: 0; top: 64px; width: 240px; height: calc(100vh - 64px); background: #fff; border-right: 1px solid #e4e0d6; overflow-y: auto; padding: 20px 0; transition: transform 0.3s ease; display: flex; flex-direction: column; }
+    .sidebar-nav { padding: 0 12px; display: flex; flex-direction: column; gap: 2px; }
+    .nav-section-title { font-size: 11px; font-weight: 700; color: #8a948e; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 12px 6px; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; cursor: pointer; color: #5f6b62; font-size: 14px; font-weight: 500; position: relative; }
+    .nav-item:hover { background: #faf8f3; color: #16211a; }
+    .nav-item.active { background: #eef5ee; color: #008208; font-weight: 600; }
+    .nav-item.active::before { content: ""; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 3px; height: 24px; background: #008208; border-radius: 0 3px 3px 0; }
+    .nav-item svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; flex-shrink: 0; }
+    .nav-badge { margin-left: auto; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: #eef1f4; color: #3a4a55; }
+    .sidebar-footer { margin-top: auto; padding: 16px 24px; border-top: 1px solid #faf8f3; font-size: 12px; color: #8a948e; }
+    .main-content { flex: 1; min-width: 0; margin-left: 240px; padding: 24px; min-height: calc(100vh - 64px); }
+
+    /* Page header */
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+    .page-header-left h1 { font-size: 24px; font-weight: 700; color: #16211a; font-family: "Oswald", sans-serif; }
+    .page-header-left p { font-size: 14px; color: #5f6b62; margin-top: 4px; }
+    .page-actions { display: flex; gap: 10px; }
+
+    /* Buttons */
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; font-family: inherit; transition: all 0.15s; }
+    .btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
+    .btn-primary { background: linear-gradient(135deg, #008208, #00a00a); color: #fff; }
+    .btn-primary:hover { background: linear-gradient(135deg, #006b07, #008208); box-shadow: 0 4px 12px rgba(0,130,8,0.3); }
+    .btn-secondary { background: #fff; color: #16211a; border: 1px solid #c4c0b2; }
+    .btn-secondary:hover { background: #faf8f3; border-color: #8a948e; }
+    .btn-danger-outline { background: #fff; color: #b4453a; border: 1px solid #e4b7b2; }
+    .btn-danger-outline:hover { border-color: #b4453a; background: #fbeeec; }
+    .btn-sm { padding: 7px 12px; font-size: 13px; }
+    .btn-sm svg { width: 15px; height: 15px; }
+
+    /* Stats */
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: #fff; border-radius: 12px; padding: 20px; border: 1px solid #e4e0d6; }
+    .stat-card:hover { border-color: #c4c0b2; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .stat-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+    .stat-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+    .stat-icon svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; }
+    .stat-icon.green { background: #eef5ee; color: #008208; }
+    .stat-icon.blue { background: #eef1f4; color: #3a4a55; }
+    .stat-icon.forest { background: #e8eae6; color: #0f3d1e; }
+    .stat-icon.amber { background: #fbf3e3; color: #b7791f; }
+    .stat-value { font-size: 32px; font-weight: 700; font-family: "Oswald", sans-serif; color: #16211a; margin-bottom: 4px; }
+    .stat-label { font-size: 13px; color: #5f6b62; }
+
+    /* Cards */
+    .card { background: #fff; border-radius: 12px; border: 1px solid #e4e0d6; margin-bottom: 24px; }
+    .card-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid #faf8f3; }
+    .card-title { font-size: 16px; font-weight: 700; color: #16211a; }
+    .card-body { padding: 24px; }
+    .card-body.no-padding { padding: 0; }
+
+    /* Tables */
+    .table-wrapper { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; padding: 12px 16px; font-size: 12px; font-weight: 700; color: #5f6b62; text-transform: uppercase; letter-spacing: 0.5px; background: #faf8f3; border-bottom: 1px solid #e4e0d6; white-space: nowrap; }
+    th.sortable { cursor: pointer; }
+    th.sortable:hover { color: #16211a; }
+    td { padding: 14px 16px; font-size: 14px; border-bottom: 1px solid #faf8f3; vertical-align: middle; }
+    tr:hover { background: #faf8f3; }
+    tr.clickable { cursor: pointer; }
+    .entity-cell { display: flex; align-items: center; gap: 12px; }
+    .entity-avatar { width: 40px; height: 40px; border-radius: 10px; background: #eef5ee; color: #008208; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+    .entity-info { display: flex; flex-direction: column; min-width: 0; }
+    .entity-name { font-weight: 600; color: #16211a; }
+    .entity-sub { font-size: 12px; color: #5f6b62; }
+    .cell-muted { color: #5f6b62; font-size: 13px; }
+    .cell-num { font-family: "Oswald", sans-serif; font-weight: 600; }
+    .cell-stale { color: #b4453a; font-weight: 600; }
+
+    /* Badges */
+    .badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+    .badge.stage-prospect { background: #eef1f4; color: #3a4a55; }
+    .badge.stage-active { background: #eef5ee; color: #008208; }
+    .badge.stage-recruiting-partner { background: #e8eae6; color: #0f3d1e; }
+    .badge.stage-dormant { background: #f1f0ec; color: #5f6b62; }
+    .badge.ev-planning { background: #eef1f4; color: #3a4a55; }
+    .badge.ev-scheduled { background: #eef5ee; color: #008208; }
+    .badge.ev-completed { background: #e8eae6; color: #0f3d1e; }
+    .badge.ev-cancelled { background: #f1f0ec; color: #5f6b62; }
+    .badge.att-invited { background: #fbf3e3; color: #b7791f; }
+    .badge.att-confirmed { background: #eef5ee; color: #008208; }
+    .badge.att-attended { background: #e8eae6; color: #0f3d1e; }
+    .badge.att-declined { background: #f1f0ec; color: #5f6b62; }
+    .tag-chip { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 10px; font-size: 11px; font-weight: 600; background: #faf8f3; color: #5f6b62; border: 1px solid #e4e0d6; margin-right: 4px; }
+
+    /* Filter bar */
+    .filter-bar { display: flex; align-items: center; gap: 12px; padding: 16px; background: #fff; border-radius: 12px; border: 1px solid #e4e0d6; margin-bottom: 24px; flex-wrap: wrap; }
+    .filter-group { display: flex; align-items: center; gap: 8px; }
+    .filter-label { font-size: 13px; font-weight: 600; color: #5f6b62; }
+    .filter-select { padding: 8px 32px 8px 12px; border: 1px solid #e4e0d6; border-radius: 6px; font-size: 13px; background: #fff; appearance: none; cursor: pointer; min-width: 140px; font-family: inherit; color: #16211a; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
+    .filter-select:focus { outline: none; border-color: #008208; }
+    .filter-search { position: relative; flex: 1; min-width: 150px; }
+    .filter-search input { width: 100%; padding: 9px 14px 9px 38px; border: 1px solid #e4e0d6; border-radius: 8px; font-size: 13.5px; background: #faf8f3; font-family: inherit; color: #16211a; }
+    .filter-search input:focus { outline: none; border-color: #008208; background: #fff; box-shadow: 0 0 0 3px rgba(0,130,8,0.1); }
+    .filter-search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; stroke: #8a948e; fill: none; stroke-width: 2; }
+    .filter-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .filter-field > label { display: none; font-size: 10px; font-weight: 700; color: #8a948e; text-transform: uppercase; letter-spacing: 0.5px; }
+    .filter-clear-link { background: none; border: none; color: #008208; font-weight: 600; font-size: 12px; cursor: pointer; padding: 4px 8px; font-family: inherit; margin-left: auto; }
+    .filter-clear-link:hover { text-decoration: underline; }
+    .filter-count-text { font-size: 13px; color: #5f6b62; }
+    .filter-count-text strong { color: #16211a; font-family: "Oswald", sans-serif; font-size: 15px; }
+
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(22,33,26,0.55); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.18s; }
+    .modal-overlay.open { opacity: 1; pointer-events: auto; }
+    .modal { background: #fff; border-radius: 16px; width: 100%; max-width: 860px; max-height: 90vh; overflow-y: auto; transform: translateY(20px); transition: transform 0.2s; box-shadow: 0 20px 60px rgba(0,0,0,0.25); }
+    .modal.modal-sm { max-width: 560px; }
+    .modal-overlay.open .modal { transform: translateY(0); }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 22px 24px; border-bottom: 1px solid #faf8f3; gap: 12px; position: sticky; top: 0; background: #fff; border-radius: 16px 16px 0 0; z-index: 1; }
+    .modal-header-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
+    .modal-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .modal-icon svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; }
+    .modal-icon.green { background: #eef5ee; color: #008208; }
+    .modal-icon.forest { background: #e8eae6; color: #0f3d1e; }
+    .modal-title h2 { font-size: 20px; font-weight: 700; color: #16211a; font-family: "Oswald", sans-serif; line-height: 1.1; }
+    .modal-title p { font-size: 13px; color: #5f6b62; margin-top: 3px; }
+    .modal-close { background: none; border: none; cursor: pointer; padding: 8px; border-radius: 8px; color: #5f6b62; flex-shrink: 0; }
+    .modal-close:hover { background: #faf8f3; color: #16211a; }
+    .modal-close svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; }
+    .modal-body { padding: 24px; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 18px 24px; border-top: 1px solid #faf8f3; position: sticky; bottom: 0; background: #fff; border-radius: 0 0 16px 16px; }
+    .modal-footer .btn-danger-outline { margin-right: auto; }
+
+    /* Forms */
+    .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .form-grid .form-field.full { grid-column: 1 / -1; }
+    .form-field label { display: block; font-size: 11px; font-weight: 700; color: #5f6b62; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .form-field input, .form-field select, .form-field textarea { width: 100%; padding: 10px 12px; font-size: 14px; border: 1px solid #e4e0d6; border-radius: 8px; background: #faf8f3; color: #16211a; font-family: inherit; }
+    .form-field input:focus, .form-field select:focus, .form-field textarea:focus { outline: none; border-color: #008208; background: #fff; }
+    .form-field textarea { resize: vertical; min-height: 70px; }
+    .form-field select { appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 32px; }
+    .form-hint { font-size: 12px; color: #8a948e; margin-top: 5px; }
+
+    /* Detail modal sections */
+    .detail-section { margin-top: 26px; }
+    .detail-section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .detail-section-head h3 { font-size: 14px; font-weight: 700; color: #16211a; text-transform: uppercase; letter-spacing: 0.5px; }
+    .detail-section-head .count { font-family: "Oswald", sans-serif; font-size: 13px; color: #8a948e; font-weight: 600; margin-left: 8px; }
+
+    /* Contact rows */
+    .contact-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid #e4e0d6; border-radius: 10px; margin-bottom: 8px; }
+    .contact-row:hover { background: #faf8f3; }
+    .contact-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #008208, #00a00a); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+    .contact-main { flex: 1; min-width: 0; }
+    .contact-name { font-size: 14px; font-weight: 600; color: #16211a; }
+    .contact-meta { font-size: 12px; color: #5f6b62; margin-top: 1px; }
+    .contact-links { display: flex; gap: 4px; }
+    .icon-btn { background: none; border: none; cursor: pointer; padding: 7px; border-radius: 6px; color: #5f6b62; display: inline-flex; }
+    .icon-btn:hover { background: #eef5ee; color: #008208; }
+    .icon-btn.danger:hover { background: #fbeeec; color: #b4453a; }
+    .icon-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+    /* Interaction timeline */
+    .ix-log-form { display: flex; gap: 8px; flex-wrap: wrap; padding: 14px; background: #faf8f3; border: 1px solid #e4e0d6; border-radius: 10px; margin-bottom: 14px; align-items: flex-end; }
+    .ix-log-form .form-field { margin: 0; }
+    .ix-log-form .form-field input, .ix-log-form .form-field select { background: #fff; }
+    .ix-field-type { width: 140px; }
+    .ix-field-date { width: 148px; }
+    .ix-field-contact { width: 180px; }
+    .ix-field-note { flex: 1; min-width: 180px; }
+    .ix-item { display: flex; gap: 12px; padding: 12px 4px; border-bottom: 1px solid #faf8f3; }
+    .ix-item:last-child { border-bottom: none; }
+    .ix-icon { width: 32px; height: 32px; border-radius: 8px; background: #eef5ee; color: #008208; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .ix-icon svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; }
+    .ix-main { flex: 1; min-width: 0; }
+    .ix-top { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+    .ix-type { font-size: 13px; font-weight: 700; color: #16211a; }
+    .ix-date { font-size: 12px; color: #8a948e; }
+    .ix-note { font-size: 13px; color: #5f6b62; margin-top: 3px; line-height: 1.45; }
+    .ix-by { font-size: 11px; color: #8a948e; margin-top: 3px; }
+
+    /* Attendee typeahead */
+    .attendee-add { position: relative; margin-bottom: 12px; }
+    .attendee-add input { width: 100%; padding: 10px 12px 10px 38px; font-size: 14px; border: 1px solid #e4e0d6; border-radius: 8px; background: #faf8f3; font-family: inherit; color: #16211a; }
+    .attendee-add input:focus { outline: none; border-color: #008208; background: #fff; }
+    .attendee-add > svg { position: absolute; left: 12px; top: 20px; transform: translateY(-50%); width: 16px; height: 16px; stroke: #8a948e; fill: none; stroke-width: 2; }
+    .typeahead-menu { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #fff; border: 1px solid #e4e0d6; border-radius: 10px; box-shadow: 0 8px 24px rgba(15,61,30,0.12); max-height: 240px; overflow-y: auto; z-index: 50; display: none; }
+    .typeahead-menu.open { display: block; }
+    .typeahead-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; cursor: pointer; }
+    .typeahead-item:hover { background: #faf8f3; }
+    .typeahead-item .t-name { font-size: 13.5px; font-weight: 600; color: #16211a; }
+    .typeahead-item .t-sub { font-size: 12px; color: #5f6b62; }
+    .typeahead-empty { padding: 12px 14px; font-size: 13px; color: #8a948e; }
+    .attendee-row { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border: 1px solid #e4e0d6; border-radius: 10px; margin-bottom: 8px; }
+    .attendee-row select { padding: 6px 28px 6px 10px; font-size: 12.5px; border: 1px solid #e4e0d6; border-radius: 6px; background: #fff; font-family: inherit; color: #16211a; appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
+    .attendee-row select:focus { outline: none; border-color: #008208; }
+
+    /* Add chooser */
+    .choice-card { display: flex; align-items: center; gap: 14px; padding: 18px; border: 1px solid #e4e0d6; border-radius: 12px; cursor: pointer; margin-bottom: 10px; background: #fff; width: 100%; text-align: left; font-family: inherit; transition: all 0.15s; }
+    .choice-card:hover { border-color: #008208; background: #faf8f3; box-shadow: 0 4px 12px rgba(0,130,8,0.08); }
+    .choice-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: #eef5ee; color: #008208; }
+    .choice-icon svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; }
+    .choice-main { min-width: 0; }
+    .choice-title { font-size: 15px; font-weight: 700; color: #16211a; }
+    .choice-sub { font-size: 13px; color: #5f6b62; margin-top: 2px; }
+
+    /* Empty states */
+    .empty-state { text-align: center; padding: 48px 24px; color: #8a948e; }
+    .empty-state svg { width: 40px; height: 40px; stroke: #c4c0b2; fill: none; stroke-width: 1.5; margin-bottom: 12px; }
+    .empty-state h3 { font-size: 15px; font-weight: 700; color: #5f6b62; margin-bottom: 4px; }
+    .empty-state p { font-size: 13px; }
+    .empty-inline { padding: 18px; text-align: center; font-size: 13px; color: #8a948e; border: 1px dashed #e4e0d6; border-radius: 10px; }
+
+    /* Toast */
+    #erToast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: #16211a; color: #fff; font-size: 13.5px; font-weight: 600; padding: 12px 20px; border-radius: 10px; z-index: 3000; opacity: 0; transition: all 0.25s; pointer-events: none; max-width: 90vw; }
+    #erToast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    /* Auth gate overlay (mirrors CS admin dashboard) */
+    .gate-overlay { position: fixed; inset: 0; background: #f7f5f0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; font-family: 'Inter', sans-serif; }
+    .gate-overlay.hidden { display: none; }
+    .gate-card { max-width: 460px; width: 100%; background: #ffffff; border: 1px solid #e7e1d3; border-radius: 16px; padding: 40px 32px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.06); }
+    .gate-logo { font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 28px; color: #008208; letter-spacing: 0.02em; margin-bottom: 24px; }
+    .gate-spinner { width: 40px; height: 40px; margin: 0 auto 20px; border: 3px solid #e7e1d3; border-top-color: #008208; border-radius: 50%; animation: gate-spin 0.7s linear infinite; }
+    @keyframes gate-spin { to { transform: rotate(360deg); } }
+    .gate-icon { width: 56px; height: 56px; margin: 0 auto 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .gate-icon svg { width: 28px; height: 28px; stroke-width: 2.5; fill: none; stroke: currentColor; }
+    .gate-icon.error { background: #fbeeec; color: #b4453a; }
+    .gate-icon.warn  { background: #fbf3e3; color: #b7791f; }
+    .gate-title { font-size: 20px; font-weight: 700; color: #16211a; margin-bottom: 10px; }
+    .gate-body { font-size: 14px; color: #4a5550; line-height: 1.55; margin-bottom: 8px; }
+    .gate-detail { font-size: 12px; color: #8a948e; margin-top: 16px; font-family: ui-monospace, monospace; }
+    .gate-button { margin-top: 22px; padding: 10px 22px; background: #008208; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .gate-button:hover { background: #006b07; }
+    .gate-button.secondary { background: #fff; color: #4a5550; border: 1px solid #d8d3c5; }
+    .gate-button.secondary:hover { background: #f0ece1; }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .sidebar { transform: translateX(-100%); z-index: 999; }
+      .sidebar.mobile-open { transform: translateX(0); box-shadow: 4px 0 20px rgba(0,0,0,0.1); }
+      .main-content { margin-left: 0; }
+      .mobile-menu-btn { display: block; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 900px) {
+      .col-tags { display: none; }
+    }
+    @media (max-width: 640px) {
+      .main-content { padding: 16px; }
+      .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .stat-card { padding: 14px; }
+      .stat-value { font-size: 24px; }
+      .form-grid { grid-template-columns: 1fr; }
+      .topbar-logo { height: 28px; }
+      .profile-info { display: none; }
+      .ix-field-type, .ix-field-date, .ix-field-contact { width: 100%; }
+      .col-owner, .col-industry, .col-evtype { display: none; }
+      .page-header-left h1 { font-size: 20px; }
+      .modal-overlay { padding: 10px; }
+      .modal-body { padding: 18px; }
+      .modal-header { padding: 18px; }
+      .modal-footer { padding: 14px 18px; flex-wrap: wrap; }
+      .modal-footer .btn-danger-outline { margin-right: 0; width: 100%; justify-content: center; order: 3; }
+      .filter-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .filter-search { grid-column: 1 / -1; min-width: 0; }
+      .filter-field > label { display: block; }
+      .filter-select { min-width: 0; width: 100%; }
+      .filter-clear-link { grid-column: 1 / -1; margin-left: 0; text-align: right; padding: 4px 0; }
+      .contact-meta { white-space: normal; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="gate-overlay" id="gateOverlay">
+    <div class="gate-card" id="gateCard">
+      <div class="gate-logo">CLOVERPATH</div>
+      <div class="gate-spinner" id="gateSpinner"></div>
+      <div class="gate-title" id="gateTitle">Loading Employer Relations</div>
+      <div class="gate-body" id="gateBody">Verifying your access and loading your organization's data.</div>
+      <div class="gate-detail" id="gateDetail" style="display:none;"></div>
+      <div id="gateActions"></div>
+    </div>
+  </div>
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="mobile-menu-btn" id="erMobileMenuBtn" aria-label="Toggle navigation">
+        <svg viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+      <img src="https://cdn.prod.website-files.com/68bf2f9e0722f5e0b402ad4d/691bf346a23098b5a5a4c19b_CloverPath_HorizontalLogo_FullColor.png" alt="CloverPath" class="topbar-logo">
+      <span class="admin-badge">Career Services</span>
+    </div>
+    <div class="topbar-right">
+      <div class="profile-dropdown">
+        <div class="profile-avatar" id="erProfileAvatar">AW</div>
+        <div class="profile-info">
+          <span class="profile-name" id="erProfileName">Amy Ware</span>
+          <span class="profile-role">Career Services Admin</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar" id="erSidebar">
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">Employer Relations</div>
+        <div class="nav-item active" data-view="employers">
+          <svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/><path d="M9 9v.01M9 12v.01M9 15v.01M9 18v.01"/></svg>
+          Employers
+          <span class="nav-badge" id="erNavEmployerCount">0</span>
+        </div>
+        <div class="nav-item" data-view="events">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          Events
+          <span class="nav-badge" id="erNavEventCount">0</span>
+        </div>
+      </nav>
+      <div class="sidebar-footer">Demo mode with sample data</div>
+    </aside>
+
+    <main class="main-content">
+      <div id="erViewEmployers"></div>
+      <div id="erViewEvents" style="display:none;"></div>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="erModalOverlay"></div>
+  <div id="erToast"></div>
+
+  <script>
+(function () {
+  if (window.__cpEmployerRelations) return;
+  window.__cpEmployerRelations = true;
+
+  // ============================================================
+  // DATA LAYER — LIVE flag
+  // LIVE=true: real Supabase. Auth gate mirrors the CS admin
+  // dashboard: session -> profile (is_org_admin) -> org ->
+  // get_my_features (UX gating; RLS is the real boundary).
+  // All queries carry an explicit organization_id filter as
+  // defense-in-depth on top of RLS.
+  // LIVE=false: the in-memory mock data below, unchanged — flip
+  // the flag to demo. One source of truth, no parallel codebases.
+  // ============================================================
+  var LIVE = true;
+  var SUPABASE_URL = 'https://clhuplhaejneecbyhphh.supabase.co';
+  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNsaHVwbGhhZWpuZWVjYnlocGhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2Mzc5OTksImV4cCI6MjA3NjIxMzk5OX0.ropRR6Izmcy1sRV5v9HDDvBTlCTTGnJcLUvdSyYloBI';
+
+  var supabaseClient = null;   // initialized in bootLive()
+  var currentUser = null;      // profiles row: { id, email, full_name, organization_id, is_org_admin }
+  var currentOrg = null;       // organizations row: { id, name }
+
+  // ---- Gate UI helpers (mirrors CS admin dashboard) ----
+  function gateShow(state, opts) {
+    opts = opts || {};
+    var overlay = document.getElementById('gateOverlay');
+    var spinner = document.getElementById('gateSpinner');
+    var title = document.getElementById('gateTitle');
+    var body = document.getElementById('gateBody');
+    var detail = document.getElementById('gateDetail');
+    var actions = document.getElementById('gateActions');
+    var card = document.getElementById('gateCard');
+    if (!overlay) return;
+    overlay.classList.remove('hidden');
+    [].forEach.call(card.querySelectorAll('.gate-icon'), function (n) { n.remove(); });
+    spinner.style.display = 'none';
+    actions.innerHTML = '';
+    detail.style.display = 'none';
+    if (state === 'loading') {
+      spinner.style.display = 'block';
+      title.textContent = opts.title || 'Loading Employer Relations';
+      body.textContent = opts.body || 'Verifying your access and loading your organization\u2019s data.';
+    } else {
+      var ic = document.createElement('div');
+      ic.className = 'gate-icon ' + (state === 'error' ? 'error' : 'warn');
+      ic.innerHTML = state === 'error'
+        ? '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="13"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+        : '<svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+      card.insertBefore(ic, title);
+      title.textContent = opts.title || 'Something went wrong';
+      body.textContent = opts.body || '';
+      if (opts.detail) { detail.style.display = 'block'; detail.textContent = opts.detail; }
+      (opts.actions || []).forEach(function (a) {
+        var btn = document.createElement('button');
+        btn.className = 'gate-button ' + (a.secondary ? 'secondary' : '');
+        btn.textContent = a.label;
+        btn.onclick = a.onClick;
+        actions.appendChild(btn);
+      });
+    }
+  }
+  function gateHide() {
+    var overlay = document.getElementById('gateOverlay');
+    if (overlay) overlay.classList.add('hidden');
+  }
+  function signOut() {
+    try { supabaseClient.auth.signOut().catch(function () {}); } catch (e) {}
+    window.location.href = 'https://www.clover-path.com/login';
+  }
+
+  // ---------- Vocabularies (match planned CHECK constraints) ----------
+  var STAGES = ['Prospect', 'Active', 'Recruiting Partner', 'Dormant'];
+  var INDUSTRIES = ['Technology & Software', 'Finance & Banking', 'Consulting', 'Marketing & Advertising', 'Healthcare', 'Engineering', 'Sales', 'Retail & Customer Service'];
+  var IX_TYPES = { email: 'Email', call: 'Call', meeting: 'Meeting', campus_visit: 'Campus visit', conference: 'Conference', other: 'Other' };
+  var EVENT_TYPES = { career_fair: 'Career fair', info_session: 'Info session', on_campus_interviews: 'On-campus interviews', panel: 'Panel', other: 'Other' };
+  var EVENT_STATUSES = { planning: 'Planning', scheduled: 'Scheduled', completed: 'Completed', cancelled: 'Cancelled' };
+  var ATT_STATUSES = { invited: 'Invited', confirmed: 'Confirmed', attended: 'Attended', declined: 'Declined' };
+  var OWNERS = [
+    { id: 'u-amy', name: 'Amy Ware' },
+    { id: 'u-marcus', name: 'Marcus Bell' },
+    { id: 'u-dana', name: 'Dana Whitfield' }
+  ];
+
+  // ---------- Mock data ----------
+  var employers = [
+    { id: 'e1', name: 'FedEx', industry: 'Engineering', location: 'Memphis, TN', website: 'https://careers.fedex.com', relationship_stage: 'Recruiting Partner', owner_user_id: 'u-amy', tags: ['fortune-500', 'internships', 'full-time'], notes: 'Longest running pipeline. Ops leadership program takes 2 to 4 grads per year. Primary contact rotates annually, keep the bench warm.' },
+    { id: 'e2', name: 'St. Jude Children\u2019s Research Hospital', industry: 'Healthcare', location: 'Memphis, TN', website: 'https://www.stjude.org/jobs', relationship_stage: 'Recruiting Partner', owner_user_id: 'u-dana', tags: ['research', 'internships', 'local'], notes: 'Summer research program is competitive. They want candidates flagged by February.' },
+    { id: 'e3', name: 'AutoZone', industry: 'Retail & Customer Service', location: 'Memphis, TN', website: 'https://careers.autozone.com', relationship_stage: 'Active', owner_user_id: 'u-marcus', tags: ['fortune-500', 'full-time', 'local'], notes: 'Corporate rotational program. Store ops roles are a fallback pitch, corporate is the target.' },
+    { id: 'e4', name: 'First Horizon Bank', industry: 'Finance & Banking', location: 'Memphis, TN', website: 'https://www.firsthorizon.com/careers', relationship_stage: 'Active', owner_user_id: 'u-amy', tags: ['internships', 'sponsor'], notes: 'Sponsored last two finance nights. Credit analyst track hires each spring.' },
+    { id: 'e5', name: 'International Paper', industry: 'Engineering', location: 'Memphis, TN', website: 'https://www.internationalpaper.com/careers', relationship_stage: 'Active', owner_user_id: 'u-marcus', tags: ['fortune-500', 'internships'], notes: 'Supply chain and engineering co-ops. Slow to respond in summer.' },
+    { id: 'e6', name: 'Deloitte', industry: 'Consulting', location: 'Memphis, TN', website: 'https://www2.deloitte.com/us/en/careers.html', relationship_stage: 'Active', owner_user_id: 'u-amy', tags: ['big-four', 'full-time'], notes: 'Memphis office recruits regionally. Audit and advisory both open to liberal arts profiles with strong GPA.' },
+    { id: 'e7', name: 'Baptist Memorial Health Care', industry: 'Healthcare', location: 'Memphis, TN', website: 'https://www.baptistonline.org/careers', relationship_stage: 'Prospect', owner_user_id: 'u-dana', tags: ['local'], notes: 'Met HR director at regional consortium. No formal program yet, exploring shadowing placements.' },
+    { id: 'e8', name: 'Archer Malmo', industry: 'Marketing & Advertising', location: 'Memphis, TN', website: 'https://archermalmo.com', relationship_stage: 'Dormant', owner_user_id: 'u-marcus', tags: ['creative', 'internships'], notes: 'Took interns in 2023 and 2024. Contact left the agency, relationship went quiet.' },
+    { id: 'e9', name: 'ServiceMaster', industry: 'Sales', location: 'Memphis, TN', website: 'https://www.servicemaster.com/careers', relationship_stage: 'Dormant', owner_user_id: 'u-amy', tags: ['full-time'], notes: 'Sales development program paused after reorg. Revisit in fall.' },
+    { id: 'e10', name: 'Green Mountain Technology', industry: 'Technology & Software', location: 'Memphis, TN', website: 'https://www.greenmountaintechnology.com', relationship_stage: 'Active', owner_user_id: 'u-marcus', tags: ['local', 'internships', 'alumni-founded'], notes: 'Alumni connection on the leadership team. Small classes, high conversion to full time.' },
+    { id: 'e11', name: 'Regional One Health', industry: 'Healthcare', location: 'Memphis, TN', website: 'https://www.regionalonehealth.org/careers', relationship_stage: 'Prospect', owner_user_id: 'u-dana', tags: ['local'], notes: 'Cold outreach sent, waiting on reply from talent acquisition.' },
+    { id: 'e12', name: 'Raymond James', industry: 'Finance & Banking', location: 'Memphis, TN', website: 'https://www.raymondjames.com/careers', relationship_stage: 'Prospect', owner_user_id: 'u-amy', tags: ['full-time'], notes: 'Branch manager expressed interest at chamber event. Needs a follow up meeting.' }
+  ];
+
+  var contacts = [
+    { id: 'c1', employer_id: 'e1', name: 'Renee Caldwell', title: 'University Relations Manager', email: 'r.caldwell@fedex.com', phone: '(901) 555-0142', linkedin_url: 'https://linkedin.com/in/reneecaldwell', owner_user_id: 'u-amy', notes: 'Prefers email. Books campus visits a semester out.' },
+    { id: 'c2', employer_id: 'e1', name: 'Devon Marsh', title: 'Ops Leadership Program Lead', email: 'd.marsh@fedex.com', phone: '', linkedin_url: '', owner_user_id: 'u-amy', notes: '' },
+    { id: 'c3', employer_id: 'e2', name: 'Priya Raman', title: 'Research Programs Coordinator', email: 'priya.raman@stjude.org', phone: '(901) 555-0187', linkedin_url: 'https://linkedin.com/in/priyaraman', owner_user_id: 'u-dana', notes: 'Wants shortlists by early February.' },
+    { id: 'c4', employer_id: 'e3', name: 'Terrence Boyd', title: 'Campus Recruiter', email: 'terrence.boyd@autozone.com', phone: '(901) 555-0163', linkedin_url: '', owner_user_id: 'u-marcus', notes: '' },
+    { id: 'c5', employer_id: 'e4', name: 'Melissa Grant', title: 'Talent Acquisition Partner', email: 'mgrant@firsthorizon.com', phone: '(901) 555-0129', linkedin_url: 'https://linkedin.com/in/melissagrant', owner_user_id: 'u-amy', notes: 'Handles the sponsorship checks too.' },
+    { id: 'c6', employer_id: 'e4', name: 'Carl Whitten', title: 'VP, Credit Analytics', email: 'cwhitten@firsthorizon.com', phone: '', linkedin_url: '', owner_user_id: 'u-amy', notes: 'Hiring manager for the analyst track.' },
+    { id: 'c7', employer_id: 'e5', name: 'Janelle Okafor', title: 'Early Careers Recruiter', email: 'janelle.okafor@ipaper.com', phone: '(901) 555-0175', linkedin_url: '', owner_user_id: 'u-marcus', notes: '' },
+    { id: 'c8', employer_id: 'e6', name: 'Stephen Liu', title: 'Recruiting Senior Associate', email: 'sliu@deloitte.com', phone: '', linkedin_url: 'https://linkedin.com/in/stephenliu', owner_user_id: 'u-amy', notes: 'Rhodes alum, class of 2019.' },
+    { id: 'c9', employer_id: 'e7', name: 'Angela Pruitt', title: 'Director of Human Resources', email: 'angela.pruitt@bmhcc.org', phone: '(901) 555-0118', linkedin_url: '', owner_user_id: 'u-dana', notes: 'Met at Mid-South consortium.' },
+    { id: 'c10', employer_id: 'e8', name: 'Nate Corliss', title: 'Studio Operations Manager', email: 'nate@archermalmo.com', phone: '', linkedin_url: '', owner_user_id: 'u-marcus', notes: 'Replaced our old contact. Not yet met.' },
+    { id: 'c11', employer_id: 'e10', name: 'Beth Aldridge', title: 'Head of People', email: 'baldridge@greenmountaintechnology.com', phone: '(901) 555-0196', linkedin_url: 'https://linkedin.com/in/bethaldridge', owner_user_id: 'u-marcus', notes: '' },
+    { id: 'c12', employer_id: 'e12', name: 'Howard Beck', title: 'Branch Manager', email: 'howard.beck@raymondjames.com', phone: '(901) 555-0151', linkedin_url: '', owner_user_id: 'u-amy', notes: '' }
+  ];
+
+  function d(offsetDays) {
+    var dt = new Date();
+    dt.setDate(dt.getDate() - offsetDays);
+    return dt.toISOString().slice(0, 10);
+  }
+
+  var interactions = [
+    { id: 'x1', employer_id: 'e1', contact_id: 'c1', interaction_type: 'meeting', interaction_date: d(9), note: 'Fall campus visit planning call. They want a dedicated info session the week before the career fair.', logged_by: 'u-amy' },
+    { id: 'x2', employer_id: 'e1', contact_id: 'c2', interaction_type: 'email', interaction_date: d(31), note: 'Sent ops leadership program flyer for review.', logged_by: 'u-amy' },
+    { id: 'x3', employer_id: 'e1', contact_id: 'c1', interaction_type: 'conference', interaction_date: d(74), note: 'Connected at SoACE regional. Confirmed continued partnership for the fall cycle.', logged_by: 'u-amy' },
+    { id: 'x4', employer_id: 'e2', contact_id: 'c3', interaction_type: 'call', interaction_date: d(16), note: 'Summer research cohort debrief. Two of our students placed, both got strong reviews.', logged_by: 'u-dana' },
+    { id: 'x5', employer_id: 'e2', contact_id: 'c3', interaction_type: 'email', interaction_date: d(48), note: 'Shared program dates for next cycle.', logged_by: 'u-dana' },
+    { id: 'x6', employer_id: 'e3', contact_id: 'c4', interaction_type: 'email', interaction_date: d(22), note: 'Confirmed attendance at the fall career fair. Requested a table near the entrance.', logged_by: 'u-marcus' },
+    { id: 'x7', employer_id: 'e4', contact_id: 'c5', interaction_type: 'meeting', interaction_date: d(12), note: 'Sponsorship renewal for Finance and Consulting Night. Verbal yes, paperwork to follow.', logged_by: 'u-amy' },
+    { id: 'x8', employer_id: 'e4', contact_id: 'c6', interaction_type: 'call', interaction_date: d(55), note: 'Walked through analyst track hiring timeline. Applications open in September.', logged_by: 'u-amy' },
+    { id: 'x9', employer_id: 'e5', contact_id: 'c7', interaction_type: 'email', interaction_date: d(41), note: 'Co-op posting details received, forwarded to advising team.', logged_by: 'u-marcus' },
+    { id: 'x10', employer_id: 'e6', contact_id: 'c8', interaction_type: 'campus_visit', interaction_date: d(27), note: 'Hosted case interview workshop. 34 students attended, strong feedback.', logged_by: 'u-amy' },
+    { id: 'x11', employer_id: 'e7', contact_id: 'c9', interaction_type: 'conference', interaction_date: d(63), note: 'Initial conversation at Mid-South consortium. Interested in shadowing placements for pre-health students.', logged_by: 'u-dana' },
+    { id: 'x12', employer_id: 'e8', contact_id: null, interaction_type: 'email', interaction_date: d(148), note: 'Outreach to general inbox after our contact left. No reply.', logged_by: 'u-marcus' },
+    { id: 'x13', employer_id: 'e9', contact_id: null, interaction_type: 'call', interaction_date: d(122), note: 'Program paused during reorg. They asked us to check back in the fall.', logged_by: 'u-amy' },
+    { id: 'x14', employer_id: 'e10', contact_id: 'c11', interaction_type: 'meeting', interaction_date: d(6), note: 'Scoped two spring internship seats in the parcel analytics group.', logged_by: 'u-marcus' },
+    { id: 'x15', employer_id: 'e12', contact_id: 'c12', interaction_type: 'other', interaction_date: d(97), note: 'Brief intro at chamber of commerce event. Said to reach out about info sessions.', logged_by: 'u-amy' }
+  ];
+
+  var events = [
+    { id: 'ev1', title: 'Fall Career Fair 2026', event_type: 'career_fair', event_date: '2026-10-08', location: 'Bryan Campus Life Center', description: 'Flagship all-majors fair. Target is 40 employer tables.', status: 'planning', created_by: 'u-amy' },
+    { id: 'ev2', title: 'Finance & Consulting Night', event_type: 'info_session', event_date: '2026-09-17', location: 'Buckman Hall 108', description: 'Evening networking session for finance, banking, and consulting employers. Sponsored by First Horizon.', status: 'scheduled', created_by: 'u-amy' },
+    { id: 'ev3', title: 'Healthcare Careers Panel', event_type: 'panel', event_date: '2026-04-14', location: 'Blount Auditorium', description: 'Spring panel on clinical and research career paths.', status: 'completed', created_by: 'u-dana' },
+    { id: 'ev4', title: 'On-Campus Interview Day', event_type: 'on_campus_interviews', event_date: '2026-11-05', location: 'Career Services Suite', description: 'Reserved interview rooms for fall full-time and internship cycles.', status: 'scheduled', created_by: 'u-marcus' }
+  ];
+
+  // Attendee rows attach either a contact or a whole company to an event:
+  // exactly one of contact_id / employer_id is set (matches planned CHECK).
+  var attendees = [
+    { id: 'a1', event_id: 'ev1', contact_id: 'c1', employer_id: null, status: 'confirmed' },
+    { id: 'a2', event_id: 'ev1', contact_id: 'c4', employer_id: null, status: 'confirmed' },
+    { id: 'a3', event_id: 'ev1', contact_id: 'c7', employer_id: null, status: 'invited' },
+    { id: 'a4', event_id: 'ev1', contact_id: 'c11', employer_id: null, status: 'invited' },
+    { id: 'a5', event_id: 'ev1', contact_id: 'c8', employer_id: null, status: 'invited' },
+    { id: 'a14', event_id: 'ev1', contact_id: null, employer_id: 'e2', status: 'confirmed' },
+    { id: 'a15', event_id: 'ev1', contact_id: null, employer_id: 'e4', status: 'invited' },
+    { id: 'a6', event_id: 'ev2', contact_id: 'c5', employer_id: null, status: 'confirmed' },
+    { id: 'a7', event_id: 'ev2', contact_id: 'c6', employer_id: null, status: 'confirmed' },
+    { id: 'a8', event_id: 'ev2', contact_id: 'c8', employer_id: null, status: 'confirmed' },
+    { id: 'a9', event_id: 'ev2', contact_id: 'c12', employer_id: null, status: 'invited' },
+    { id: 'a16', event_id: 'ev2', contact_id: null, employer_id: 'e6', status: 'confirmed' },
+    { id: 'a10', event_id: 'ev3', contact_id: 'c3', employer_id: null, status: 'attended' },
+    { id: 'a11', event_id: 'ev3', contact_id: 'c9', employer_id: null, status: 'attended' },
+    { id: 'a12', event_id: 'ev4', contact_id: 'c1', employer_id: null, status: 'invited' },
+    { id: 'a13', event_id: 'ev4', contact_id: 'c5', employer_id: null, status: 'declined' }
+  ];
+
+  // ---------- Utilities ----------
+  function esc(s) {
+    if (s === null || s === undefined) return '';
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function uid(prefix) { return prefix + '-' + Math.random().toString(36).slice(2, 9); }
+  function initials(name) {
+    var parts = String(name || '').trim().split(/\s+/);
+    if (!parts[0]) return '?';
+    var a = parts[0].charAt(0), b = parts.length > 1 ? parts[parts.length - 1].charAt(0) : '';
+    return (a + b).toUpperCase();
+  }
+  function fmtDate(iso) {
+    if (!iso) return '';
+    var p = iso.split('-');
+    var dt = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+    return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function daysSince(iso) {
+    if (!iso) return null;
+    var p = iso.split('-');
+    var dt = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+    var now = new Date(); now.setHours(0, 0, 0, 0);
+    return Math.floor((now - dt) / 86400000);
+  }
+  function todayIso() { return new Date().toISOString().slice(0, 10); }
+  function ownerName(id, fallback) {
+    var o = OWNERS.filter(function (x) { return x.id === id; })[0];
+    if (o) return o.name;
+    if (currentUser && id === currentUser.id) return currentUser.full_name || currentUser.email;
+    return fallback || 'Unassigned';
+  }
+  function errMsg(e) {
+    var m = (e && e.message) ? String(e.message) : String(e || 'Something went wrong');
+    if (e && e.code === '23505') return 'Already attached';
+    if (m.indexOf('row-level security') !== -1) return 'Not permitted';
+    return m;
+  }
+  function withBusy(fn) {
+    return function (ev) {
+      var b = ev && ev.currentTarget ? ev.currentTarget : null;
+      if (b && b.dataset.busy) return;
+      if (b) { b.dataset.busy = '1'; b.disabled = true; }
+      Promise.resolve(fn.call(b, ev))
+        .catch(function (e) { toast(errMsg(e)); })
+        .finally(function () { if (b) { delete b.dataset.busy; b.disabled = false; } });
+    };
+  }
+  function stageClass(stage) { return 'stage-' + String(stage || '').toLowerCase().replace(/\s+/g, '-'); }
+  function toast(msg) {
+    var t = document.getElementById('erToast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function () { t.classList.remove('show'); }, 2400);
+  }
+
+  // ---------- Derived data ----------
+  function contactsFor(empId) { return contacts.filter(function (c) { return c.employer_id === empId; }); }
+  function interactionsFor(empId) {
+    return interactions.filter(function (x) { return x.employer_id === empId; })
+      .slice().sort(function (a, b) { return a.interaction_date < b.interaction_date ? 1 : -1; });
+  }
+  function lastContactDate(empId) {
+    var ix = interactionsFor(empId);
+    return ix.length ? ix[0].interaction_date : null;
+  }
+  function attendeesFor(eventId) { return attendees.filter(function (a) { return a.event_id === eventId; }); }
+  function contactById(id) { return contacts.filter(function (c) { return c.id === id; })[0] || null; }
+  function employerById(id) { return employers.filter(function (e) { return e.id === id; })[0] || null; }
+  function eventById(id) { return events.filter(function (e) { return e.id === id; })[0] || null; }
+  function allTags() {
+    var set = {};
+    employers.forEach(function (e) { (e.tags || []).forEach(function (t) { set[t] = true; }); });
+    return Object.keys(set).sort();
+  }
+
+  // ---------- State ----------
+  var state = {
+    view: 'employers',
+    filters: { q: '', industry: '', stage: '', owner: '', tag: '', recency: '' },
+    sort: { key: 'name', dir: 1 }
+  };
+
+  // ---------- Icons ----------
+  var ICONS = {
+    building: '<svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/><path d="M9 9v.01M9 12v.01M9 15v.01M9 18v.01"/></svg>',
+    calendar: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
+    users: '<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+    alert: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>',
+    search: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>',
+    plus: '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+    edit: '<svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
+    trash: '<svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>',
+    close: '<svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>',
+    mail: '<svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg>',
+    phone: '<svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>',
+    link: '<svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
+    ix_email: '<svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg>',
+    ix_call: '<svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>',
+    ix_meeting: '<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+    ix_campus_visit: '<svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/></svg>',
+    ix_conference: '<svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>',
+    ix_other: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg>'
+  };
+
+  // ---------- Employers view ----------
+  function filteredEmployers() {
+    var f = state.filters;
+    var q = f.q.trim().toLowerCase();
+    var list = employers.filter(function (e) {
+      if (q) {
+        var hitName = e.name.toLowerCase().indexOf(q) !== -1;
+        var hitContact = contactsFor(e.id).some(function (c) { return c.name.toLowerCase().indexOf(q) !== -1; });
+        if (!hitName && !hitContact) return false;
+      }
+      if (f.industry && e.industry !== f.industry) return false;
+      if (f.stage && e.relationship_stage !== f.stage) return false;
+      if (f.owner && e.owner_user_id !== f.owner) return false;
+      if (f.tag && (e.tags || []).indexOf(f.tag) === -1) return false;
+      if (f.recency) {
+        var ds = daysSince(lastContactDate(e.id));
+        if (f.recency === '30' && (ds === null || ds > 30)) return false;
+        if (f.recency === '60' && (ds === null || ds > 60)) return false;
+        if (f.recency === '90plus' && ds !== null && ds <= 90) return false;
+        if (f.recency === 'never' && ds !== null) return false;
+      }
+      return true;
+    });
+    list.sort(function (a, b) {
+      if (state.sort.key === 'name') {
+        return a.name.localeCompare(b.name) * state.sort.dir;
+      }
+      var da = lastContactDate(a.id) || '0000-00-00';
+      var db = lastContactDate(b.id) || '0000-00-00';
+      return (da < db ? -1 : da > db ? 1 : 0) * state.sort.dir;
+    });
+    return list;
+  }
+
+  function renderEmployers() {
+    var root = document.getElementById('erViewEmployers');
+    var list = filteredEmployers();
+    var activeCount = employers.filter(function (e) { return e.relationship_stage === 'Active' || e.relationship_stage === 'Recruiting Partner'; }).length;
+    var needsAttention = employers.filter(function (e) {
+      var ds = daysSince(lastContactDate(e.id));
+      return ds === null || ds > 90;
+    }).length;
+    var upcoming = events.filter(function (ev) {
+      return (ev.status === 'scheduled' || ev.status === 'planning') && ev.event_date && ev.event_date >= todayIso();
+    }).length;
+
+    var html = '';
+    html += '<div class="page-header">';
+    html += '  <div class="page-header-left"><h1>Employers</h1><p>Track employer relationships, contacts, and outreach for your office</p></div>';
+    html += '  <div class="page-actions"><button class="btn btn-primary" id="erAddEmployerBtn">' + ICONS.plus + 'Add employer</button></div>';
+    html += '</div>';
+
+    html += '<div class="stats-grid">';
+    html += statCard('green', ICONS.building, employers.length, 'Employers tracked');
+    html += statCard('forest', ICONS.users, activeCount, 'Active partnerships');
+    html += statCard('amber', ICONS.alert, needsAttention, 'No contact in 90+ days');
+    html += statCard('blue', ICONS.calendar, upcoming, 'Upcoming events');
+    html += '</div>';
+
+    html += '<div class="filter-bar">';
+    html += '  <div class="filter-search">' + ICONS.search + '<input type="text" id="erSearch" placeholder="Search employers or contacts" value="' + esc(state.filters.q) + '"></div>';
+    html += filterSelect('erFilterIndustry', 'All industries', INDUSTRIES.map(function (i) { return { v: i, l: i }; }), state.filters.industry, 'Industry');
+    html += filterSelect('erFilterStage', 'All stages', STAGES.map(function (s) { return { v: s, l: s }; }), state.filters.stage, 'Stage');
+    html += filterSelect('erFilterOwner', 'All owners', OWNERS.map(function (o) { return { v: o.id, l: o.name }; }), state.filters.owner, 'Owner');
+    html += filterSelect('erFilterTag', 'All tags', allTags().map(function (t) { return { v: t, l: t }; }), state.filters.tag, 'Tag');
+    html += filterSelect('erFilterRecency', 'Any last contact', [
+      { v: '30', l: 'Within 30 days' },
+      { v: '60', l: 'Within 60 days' },
+      { v: '90plus', l: 'Over 90 days ago' },
+      { v: 'never', l: 'Never contacted' }
+    ], state.filters.recency, 'Last contact');
+    html += '  <button class="filter-clear-link" id="erClearFilters">Clear filters</button>';
+    html += '</div>';
+
+    html += '<div class="card"><div class="card-header"><span class="card-title">Employer directory</span><span class="filter-count-text">Showing <strong>' + list.length + '</strong> of ' + employers.length + '</span></div><div class="card-body no-padding"><div class="table-wrapper">';
+    if (!list.length) {
+      html += '<div class="empty-state">' + ICONS.building + '<h3>No employers match these filters</h3><p>Adjust the filters or add a new employer to get started.</p></div>';
+    } else {
+      html += '<table><thead><tr>';
+      html += '<th class="sortable" data-sort="name">Employer' + sortArrow('name') + '</th>';
+      html += '<th class="col-industry">Industry</th><th>Stage</th><th class="col-owner">Owner</th><th>Contacts</th>';
+      html += '<th class="sortable" data-sort="last">Last contact' + sortArrow('last') + '</th>';
+      html += '<th class="col-tags">Tags</th>';
+      html += '</tr></thead><tbody>';
+      list.forEach(function (e) {
+        var lc = lastContactDate(e.id);
+        var ds = daysSince(lc);
+        var stale = ds === null || ds > 90;
+        html += '<tr class="clickable" data-emp="' + esc(e.id) + '">';
+        html += '<td><div class="entity-cell"><div class="entity-avatar">' + esc(initials(e.name)) + '</div><div class="entity-info"><span class="entity-name">' + esc(e.name) + '</span><span class="entity-sub">' + esc(e.location || '') + '</span></div></div></td>';
+        html += '<td class="cell-muted col-industry">' + esc(e.industry || '') + '</td>';
+        html += '<td><span class="badge ' + stageClass(e.relationship_stage) + '">' + esc(e.relationship_stage) + '</span></td>';
+        html += '<td class="cell-muted col-owner">' + esc(ownerName(e.owner_user_id)) + '</td>';
+        html += '<td class="cell-num">' + contactsFor(e.id).length + '</td>';
+        html += '<td class="' + (stale ? 'cell-stale' : 'cell-muted') + '">' + (lc ? esc(fmtDate(lc)) : 'Never') + '</td>';
+        html += '<td class="col-tags">' + (e.tags || []).slice(0, 3).map(function (t) { return '<span class="tag-chip">' + esc(t) + '</span>'; }).join('') + '</td>';
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+    }
+    html += '</div></div></div>';
+
+    root.innerHTML = html;
+
+    document.getElementById('erAddEmployerBtn').addEventListener('click', function () { openAddChooser(); });
+    document.getElementById('erSearch').addEventListener('input', function () { state.filters.q = this.value; refreshEmployerTableOnly(); });
+    bindFilter('erFilterIndustry', 'industry');
+    bindFilter('erFilterStage', 'stage');
+    bindFilter('erFilterOwner', 'owner');
+    bindFilter('erFilterTag', 'tag');
+    bindFilter('erFilterRecency', 'recency');
+    document.getElementById('erClearFilters').addEventListener('click', function () {
+      state.filters = { q: '', industry: '', stage: '', owner: '', tag: '', recency: '' };
+      renderEmployers();
+    });
+    bindTableEvents(root);
+  }
+
+  function refreshEmployerTableOnly() {
+    // Re-render whole view but restore search focus and caret
+    var el = document.getElementById('erSearch');
+    var pos = el ? el.selectionStart : 0;
+    renderEmployers();
+    var el2 = document.getElementById('erSearch');
+    if (el2) { el2.focus(); el2.setSelectionRange(pos, pos); }
+  }
+
+  function bindTableEvents(root) {
+    root.querySelectorAll('tr.clickable[data-emp]').forEach(function (tr) {
+      tr.addEventListener('click', function () { openEmployerModal(tr.getAttribute('data-emp')); });
+    });
+    root.querySelectorAll('th.sortable').forEach(function (th) {
+      th.addEventListener('click', function () {
+        var key = th.getAttribute('data-sort');
+        if (state.sort.key === key) state.sort.dir *= -1;
+        else { state.sort.key = key; state.sort.dir = key === 'last' ? -1 : 1; }
+        renderEmployers();
+      });
+    });
+  }
+
+  function sortArrow(key) {
+    if (state.sort.key !== key) return '';
+    return state.sort.dir === 1 ? ' \u2191' : ' \u2193';
+  }
+
+  function statCard(color, icon, value, label) {
+    return '<div class="stat-card"><div class="stat-header"><div class="stat-icon ' + color + '">' + icon + '</div></div><div class="stat-value">' + value + '</div><div class="stat-label">' + esc(label) + '</div></div>';
+  }
+
+  function filterSelect(id, placeholder, options, current, label) {
+    var html = '<div class="filter-field"><label for="' + id + '">' + esc(label || placeholder) + '</label>';
+    html += '<select class="filter-select" id="' + id + '"><option value="">' + esc(placeholder) + '</option>';
+    options.forEach(function (o) {
+      html += '<option value="' + esc(o.v) + '"' + (current === o.v ? ' selected' : '') + '>' + esc(o.l) + '</option>';
+    });
+    return html + '</select></div>';
+  }
+
+  function bindFilter(id, key) {
+    document.getElementById(id).addEventListener('change', function () {
+      state.filters[key] = this.value;
+      renderEmployers();
+    });
+  }
+
+  // ---------- Modal plumbing ----------
+  function openModal(html) {
+    var ov = document.getElementById('erModalOverlay');
+    ov.innerHTML = html;
+    ov.classList.add('open');
+    ov.querySelectorAll('[data-close]').forEach(function (b) { b.addEventListener('click', closeModal); });
+    ov.addEventListener('click', overlayClick);
+  }
+  function overlayClick(e) { if (e.target === e.currentTarget) closeModal(); }
+  function closeModal() {
+    var ov = document.getElementById('erModalOverlay');
+    ov.classList.remove('open');
+    ov.removeEventListener('click', overlayClick);
+    setTimeout(function () { if (!ov.classList.contains('open')) ov.innerHTML = ''; }, 200);
+  }
+
+  // ---------- Add chooser ----------
+  function openAddChooser() {
+    var html = '<div class="modal modal-sm"><div class="modal-header"><div class="modal-header-left">';
+    html += '<div class="modal-icon green">' + ICONS.plus + '</div>';
+    html += '<div class="modal-title"><h2>Add to your network</h2><p>What are you adding?</p></div>';
+    html += '</div><button class="modal-close" data-close>' + ICONS.close + '</button></div>';
+    html += '<div class="modal-body">';
+    html += '<button class="choice-card" id="chooseCompany"><div class="choice-icon">' + ICONS.building + '</div><div class="choice-main"><div class="choice-title">Company with point of contact</div><div class="choice-sub">Add a new employer and the recruiter or contact you work with there</div></div></button>';
+    html += '<button class="choice-card" id="chooseContact"><div class="choice-icon">' + ICONS.users + '</div><div class="choice-main"><div class="choice-title">Point of contact only</div><div class="choice-sub">Add a recruiter or contact at a company you already track</div></div></button>';
+    html += '</div></div>';
+    openModal(html);
+    document.getElementById('chooseCompany').addEventListener('click', function () { openEmployerModal(null, { withContact: true }); });
+    document.getElementById('chooseContact').addEventListener('click', function () { openContactOnlyModal(); });
+  }
+
+  // ---------- Contact-only modal (pick an existing company) ----------
+  function openContactOnlyModal() {
+    if (!employers.length) { toast('Add a company first'); return; }
+    var sorted = employers.slice().sort(function (a, b) { return a.name.localeCompare(b.name); });
+    var html = '<div class="modal modal-sm"><div class="modal-header"><div class="modal-header-left">';
+    html += '<div class="modal-icon green">' + ICONS.users + '</div>';
+    html += '<div class="modal-title"><h2>Add point of contact</h2><p>Attach a recruiter or contact to a company you already track</p></div>';
+    html += '</div><button class="modal-close" data-close>' + ICONS.close + '</button></div>';
+    html += '<div class="modal-body"><div class="form-grid">';
+    html += '<div class="form-field full"><label for="coEmployer">Company</label><select id="coEmployer"><option value="">Select a company</option>' + sorted.map(function (e) { return '<option value="' + esc(e.id) + '">' + esc(e.name) + '</option>'; }).join('') + '</select></div>';
+    html += formField('coName', 'Name', 'input', '');
+    html += formField('coTitle', 'Title', 'input', '');
+    html += formField('coEmail', 'Email', 'input', '');
+    html += formField('coPhone', 'Phone', 'input', '');
+    html += formField('coLinkedin', 'LinkedIn URL', 'input', '');
+    html += formSelect('coOwner', 'Relationship owner', OWNERS.map(function (o) { return { v: o.id, l: o.name }; }), '', 'Unassigned');
+    html += '<div class="form-field full"><label for="coNotes">Notes</label><textarea id="coNotes"></textarea></div>';
+    html += '</div></div>';
+    html += '<div class="modal-footer"><button class="btn btn-secondary" data-close>Cancel</button><button class="btn btn-primary" id="coSave">Add contact</button></div></div>';
+    openModal(html);
+    document.getElementById('coSave').addEventListener('click', withBusy(async function () {
+      var empId = document.getElementById('coEmployer').value;
+      var name = document.getElementById('coName').value.trim();
+      if (!empId) { toast('Pick a company for this contact'); return; }
+      if (!name) { toast('Contact name is required'); return; }
+      await erApi.createContact(empId, {
+        name: name,
+        title: document.getElementById('coTitle').value.trim(),
+        email: document.getElementById('coEmail').value.trim(),
+        phone: document.getElementById('coPhone').value.trim(),
+        linkedin_url: document.getElementById('coLinkedin').value.trim(),
+        owner_user_id: document.getElementById('coOwner').value || null,
+        notes: document.getElementById('coNotes').value.trim(),
+        organization_id: LIVE ? currentUser.organization_id : 'org-demo'
+      });
+      toast('Contact added');
+      closeModal();
+      await refresh();
+      openEmployerModal(empId);
+    }));
+  }
+
+  // ---------- Employer modal ----------
+  function openEmployerModal(empId, opts) {
+    opts = opts || {};
+    var isNew = !empId;
+    var withContact = isNew && opts.withContact;
+    var e = isNew ? { name: '', industry: '', location: '', website: '', relationship_stage: 'Prospect', owner_user_id: '', tags: [], notes: '' } : employerById(empId);
+    if (!e) return;
+
+    var html = '<div class="modal"><div class="modal-header"><div class="modal-header-left">';
+    html += '<div class="modal-icon green">' + ICONS.building + '</div>';
+    html += '<div class="modal-title"><h2>' + (isNew ? 'Add company' : esc(e.name)) + '</h2><p>' + (isNew ? (withContact ? 'Create the company and its point of contact together' : 'Create a new employer record') : esc(e.industry || '') + (e.location ? ' \u00b7 ' + esc(e.location) : '')) + '</p></div>';
+    html += '</div><button class="modal-close" data-close>' + ICONS.close + '</button></div>';
+    html += '<div class="modal-body">';
+
+    html += '<div class="form-grid">';
+    html += formField('emName', 'Employer name', 'input', e.name);
+    html += formSelect('emIndustry', 'Industry', INDUSTRIES.map(function (i) { return { v: i, l: i }; }), e.industry, 'Select industry');
+    html += formField('emLocation', 'Location', 'input', e.location);
+    html += formField('emWebsite', 'Website', 'input', e.website);
+    html += formSelect('emStage', 'Relationship stage', STAGES.map(function (s) { return { v: s, l: s }; }), e.relationship_stage);
+    html += formSelect('emOwner', 'Owner', OWNERS.map(function (o) { return { v: o.id, l: o.name }; }), e.owner_user_id, 'Unassigned');
+    html += '<div class="form-field full"><label for="emTags">Tags</label><input id="emTags" type="text" value="' + esc((e.tags || []).join(', ')) + '"><div class="form-hint">Separate tags with commas</div></div>';
+    html += '<div class="form-field full"><label for="emNotes">Notes</label><textarea id="emNotes">' + esc(e.notes || '') + '</textarea></div>';
+    html += '</div>';
+
+    if (!isNew) {
+      // Contacts section
+      var cs = contactsFor(empId);
+      html += '<div class="detail-section"><div class="detail-section-head"><h3>Contacts<span class="count">' + cs.length + '</span></h3><button class="btn btn-secondary btn-sm" id="emAddContact">' + ICONS.plus + 'Add contact</button></div>';
+      if (!cs.length) {
+        html += '<div class="empty-inline">No contacts yet. Add the people you work with at this employer.</div>';
+      } else {
+        cs.forEach(function (c) {
+          html += '<div class="contact-row">';
+          html += '<div class="contact-avatar">' + esc(initials(c.name)) + '</div>';
+          html += '<div class="contact-main"><div class="contact-name">' + esc(c.name) + '</div><div class="contact-meta">' + esc(c.title || '') + (c.email ? ' \u00b7 ' + esc(c.email) : '') + (c.phone ? ' \u00b7 ' + esc(c.phone) : '') + '</div></div>';
+          html += '<div class="contact-links">';
+          if (c.linkedin_url) html += '<a class="icon-btn" href="' + esc(c.linkedin_url) + '" target="_blank" rel="noopener" title="LinkedIn profile">' + ICONS.link + '</a>';
+          html += '<button class="icon-btn" data-edit-contact="' + esc(c.id) + '" title="Edit contact">' + ICONS.edit + '</button>';
+          html += '<button class="icon-btn danger" data-del-contact="' + esc(c.id) + '" title="Remove contact">' + ICONS.trash + '</button>';
+          html += '</div></div>';
+        });
+      }
+      html += '</div>';
+
+      // Interactions section
+      var ix = interactionsFor(empId);
+      html += '<div class="detail-section"><div class="detail-section-head"><h3>Interactions<span class="count">' + ix.length + '</span></h3></div>';
+      html += '<div class="ix-log-form">';
+      html += '<div class="form-field ix-field-type"><label for="ixType">Type</label><select id="ixType">' + Object.keys(IX_TYPES).map(function (k) { return '<option value="' + k + '">' + IX_TYPES[k] + '</option>'; }).join('') + '</select></div>';
+      html += '<div class="form-field ix-field-date"><label for="ixDate">Date</label><input id="ixDate" type="date" value="' + todayIso() + '"></div>';
+      html += '<div class="form-field ix-field-contact"><label for="ixContact">Contact</label><select id="ixContact"><option value="">None</option>' + cs.map(function (c) { return '<option value="' + esc(c.id) + '">' + esc(c.name) + '</option>'; }).join('') + '</select></div>';
+      html += '<div class="form-field ix-field-note"><label for="ixNote">Note</label><input id="ixNote" type="text" placeholder="What happened?"></div>';
+      html += '<button class="btn btn-primary btn-sm" id="ixLogBtn">Log interaction</button>';
+      html += '</div>';
+      if (!ix.length) {
+        html += '<div class="empty-inline">No interactions logged yet. The touch history is what survives staff turnover, so log everything.</div>';
+      } else {
+        ix.forEach(function (x) {
+          var c = x.contact_id ? contactById(x.contact_id) : null;
+          html += '<div class="ix-item"><div class="ix-icon">' + (ICONS['ix_' + x.interaction_type] || ICONS.ix_other) + '</div><div class="ix-main">';
+          html += '<div class="ix-top"><span class="ix-type">' + esc(IX_TYPES[x.interaction_type] || 'Other') + (c ? ' with ' + esc(c.name) : '') + '</span><span class="ix-date">' + esc(fmtDate(x.interaction_date)) + '</span></div>';
+          if (x.note) html += '<div class="ix-note">' + esc(x.note) + '</div>';
+          html += '<div class="ix-by">Logged by ' + esc(ownerName(x.logged_by, 'Staff')) + '</div>';
+          html += '</div></div>';
+        });
+      }
+      html += '</div>';
+    } else if (withContact) {
+      html += '<div class="detail-section"><div class="detail-section-head"><h3>Point of contact</h3></div>';
+      html += '<div class="form-grid">';
+      html += formField('pcName', 'Name', 'input', '');
+      html += formField('pcTitle', 'Title', 'input', '');
+      html += formField('pcEmail', 'Email', 'input', '');
+      html += formField('pcPhone', 'Phone', 'input', '');
+      html += formField('pcLinkedin', 'LinkedIn URL', 'input', '');
+      html += formSelect('pcOwner', 'Relationship owner', OWNERS.map(function (o) { return { v: o.id, l: o.name }; }), '', 'Unassigned');
+      html += '</div>';
+      html += '<div class="form-hint" style="margin-top:8px;">Leave the name blank to add the company without a contact.</div>';
+      html += '</div>';
+    } else {
+      html += '<div class="form-hint" style="margin-top:14px;">Save the company first, then add contacts and log interactions.</div>';
+    }
+
+    html += '</div><div class="modal-footer">';
+    if (!isNew) html += '<button class="btn btn-danger-outline" id="emDelete">' + ICONS.trash + 'Delete employer</button>';
+    html += '<button class="btn btn-secondary" data-close>Cancel</button>';
+    html += '<button class="btn btn-primary" id="emSave">' + (isNew ? 'Add company' : 'Save changes') + '</button>';
+    html += '</div></div>';
+
+    openModal(html);
+
+    document.getElementById('emSave').addEventListener('click', withBusy(async function () {
+      var name = document.getElementById('emName').value.trim();
+      if (!name) { toast('Employer name is required'); return; }
+      var rec = {
+        name: name,
+        industry: document.getElementById('emIndustry').value,
+        location: document.getElementById('emLocation').value.trim(),
+        website: document.getElementById('emWebsite').value.trim(),
+        relationship_stage: document.getElementById('emStage').value,
+        owner_user_id: document.getElementById('emOwner').value || null,
+        tags: document.getElementById('emTags').value.split(',').map(function (t) { return t.trim().toLowerCase(); }).filter(Boolean),
+        notes: document.getElementById('emNotes').value.trim()
+      };
+      if (isNew) {
+        var poc = null;
+        if (withContact) {
+          var pcName = document.getElementById('pcName').value.trim();
+          if (pcName) {
+            poc = {
+              name: pcName,
+              title: document.getElementById('pcTitle').value.trim(),
+              email: document.getElementById('pcEmail').value.trim(),
+              phone: document.getElementById('pcPhone').value.trim(),
+              linkedin_url: document.getElementById('pcLinkedin').value.trim(),
+              owner_user_id: document.getElementById('pcOwner').value || null,
+              notes: ''
+            };
+          }
+        }
+        rec.organization_id = LIVE ? currentUser.organization_id : 'org-demo';
+        var newId = await erApi.createEmployer(rec, poc);
+        toast(poc ? 'Company and contact added' : 'Company added');
+        closeModal();
+        await refresh();
+        openEmployerModal(newId);
+      } else {
+        await erApi.updateEmployer(empId, rec);
+        toast('Changes saved');
+        closeModal();
+        await refresh();
+      }
+    }));
+
+    if (!isNew) {
+      document.getElementById('emDelete').addEventListener('click', withBusy(async function () {
+        if (!confirm('Delete ' + e.name + '? This removes its contacts, interactions, and event attendees.')) return;
+        await erApi.deleteEmployer(empId);
+        toast('Employer deleted');
+        closeModal();
+        await refresh();
+      }));
+      document.getElementById('emAddContact').addEventListener('click', function () { openContactModal(empId, null); });
+      document.querySelectorAll('[data-edit-contact]').forEach(function (b) {
+        b.addEventListener('click', function () { openContactModal(empId, b.getAttribute('data-edit-contact')); });
+      });
+      document.querySelectorAll('[data-del-contact]').forEach(function (b) {
+        b.addEventListener('click', withBusy(async function () {
+          var cid = b.getAttribute('data-del-contact');
+          var c = contactById(cid);
+          if (!confirm('Remove ' + (c ? c.name : 'this contact') + '? Their logged interactions stay on the employer record.')) return;
+          await erApi.deleteContact(cid);
+          toast('Contact removed');
+          await refresh();
+          openEmployerModal(empId);
+        }));
+      });
+      document.getElementById('ixLogBtn').addEventListener('click', withBusy(async function () {
+        var note = document.getElementById('ixNote').value.trim();
+        var date = document.getElementById('ixDate').value;
+        if (!date) { toast('Pick a date for the interaction'); return; }
+        await erApi.logInteraction({
+          employer_id: empId,
+          contact_id: document.getElementById('ixContact').value || null,
+          interaction_type: document.getElementById('ixType').value,
+          interaction_date: date,
+          note: note
+        });
+        toast('Interaction logged');
+        await refresh();
+        openEmployerModal(empId);
+      }));
+    }
+  }
+
+  function formField(id, label, type, value) {
+    return '<div class="form-field"><label for="' + id + '">' + esc(label) + '</label><input id="' + id + '" type="text" value="' + esc(value || '') + '"></div>';
+  }
+  function formSelect(id, label, options, current, placeholder) {
+    var html = '<div class="form-field"><label for="' + id + '">' + esc(label) + '</label><select id="' + id + '">';
+    if (placeholder) html += '<option value="">' + esc(placeholder) + '</option>';
+    options.forEach(function (o) {
+      html += '<option value="' + esc(o.v) + '"' + (current === o.v ? ' selected' : '') + '>' + esc(o.l) + '</option>';
+    });
+    return html + '</select></div>';
+  }
+
+  // ---------- Contact modal ----------
+  function openContactModal(empId, contactId) {
+    var isNew = !contactId;
+    var c = isNew ? { name: '', title: '', email: '', phone: '', linkedin_url: '', owner_user_id: '', notes: '' } : contactById(contactId);
+    if (!c) return;
+    var emp = employerById(empId);
+
+    var html = '<div class="modal modal-sm"><div class="modal-header"><div class="modal-header-left">';
+    html += '<div class="modal-icon green">' + ICONS.users + '</div>';
+    html += '<div class="modal-title"><h2>' + (isNew ? 'Add contact' : 'Edit contact') + '</h2><p>' + esc(emp ? emp.name : '') + '</p></div>';
+    html += '</div><button class="modal-close" data-close>' + ICONS.close + '</button></div>';
+    html += '<div class="modal-body"><div class="form-grid">';
+    html += formField('cnName', 'Name', 'input', c.name);
+    html += formField('cnTitle', 'Title', 'input', c.title);
+    html += formField('cnEmail', 'Email', 'input', c.email);
+    html += formField('cnPhone', 'Phone', 'input', c.phone);
+    html += formField('cnLinkedin', 'LinkedIn URL', 'input', c.linkedin_url);
+    html += formSelect('cnOwner', 'Relationship owner', OWNERS.map(function (o) { return { v: o.id, l: o.name }; }), c.owner_user_id, 'Unassigned');
+    html += '<div class="form-field full"><label for="cnNotes">Notes</label><textarea id="cnNotes">' + esc(c.notes || '') + '</textarea></div>';
+    html += '</div></div>';
+    html += '<div class="modal-footer"><button class="btn btn-secondary" data-close>Cancel</button><button class="btn btn-primary" id="cnSave">' + (isNew ? 'Add contact' : 'Save changes') + '</button></div></div>';
+
+    openModal(html);
+
+    document.getElementById('cnSave').addEventListener('click', withBusy(async function () {
+      var name = document.getElementById('cnName').value.trim();
+      if (!name) { toast('Contact name is required'); return; }
+      var rec = {
+        name: name,
+        title: document.getElementById('cnTitle').value.trim(),
+        email: document.getElementById('cnEmail').value.trim(),
+        phone: document.getElementById('cnPhone').value.trim(),
+        linkedin_url: document.getElementById('cnLinkedin').value.trim(),
+        owner_user_id: document.getElementById('cnOwner').value || null,
+        notes: document.getElementById('cnNotes').value.trim()
+      };
+      if (isNew) {
+        rec.organization_id = LIVE ? currentUser.organization_id : 'org-demo';
+        await erApi.createContact(empId, rec);
+        toast('Contact added');
+      } else {
+        await erApi.updateContact(contactId, rec);
+        toast('Changes saved');
+      }
+      await refresh();
+      openEmployerModal(empId);
+    }));
+  }
+
+  // ---------- Events view ----------
+  function renderEvents() {
+    var root = document.getElementById('erViewEvents');
+    var list = events.slice().sort(function (a, b) {
+      return (a.event_date || '9999') < (b.event_date || '9999') ? -1 : 1;
+    });
+
+    var html = '';
+    html += '<div class="page-header">';
+    html += '  <div class="page-header-left"><h1>Events</h1><p>Plan career fairs, info sessions, and interview days, and attach employer contacts as attendees</p></div>';
+    html += '  <div class="page-actions"><button class="btn btn-primary" id="erAddEventBtn">' + ICONS.plus + 'Add event</button></div>';
+    html += '</div>';
+
+    html += '<div class="card"><div class="card-header"><span class="card-title">All events</span><span class="filter-count-text"><strong>' + list.length + '</strong> total</span></div><div class="card-body no-padding"><div class="table-wrapper">';
+    if (!list.length) {
+      html += '<div class="empty-state">' + ICONS.calendar + '<h3>No events yet</h3><p>Add your first event to start attaching employer contacts.</p></div>';
+    } else {
+      html += '<table><thead><tr><th>Event</th><th class="col-evtype">Type</th><th>Date</th><th>Status</th><th>Attendees</th></tr></thead><tbody>';
+      list.forEach(function (ev) {
+        var atts = attendeesFor(ev.id);
+        var confirmed = atts.filter(function (a) { return a.status === 'confirmed' || a.status === 'attended'; }).length;
+        html += '<tr class="clickable" data-event="' + esc(ev.id) + '">';
+        html += '<td><div class="entity-cell"><div class="entity-avatar">' + ICONS.calendar.replace('viewBox', 'style="width:18px;height:18px;stroke:#008208;fill:none;stroke-width:2;" viewBox') + '</div><div class="entity-info"><span class="entity-name">' + esc(ev.title) + '</span><span class="entity-sub">' + esc(ev.location || '') + '</span></div></div></td>';
+        html += '<td class="cell-muted col-evtype">' + esc(EVENT_TYPES[ev.event_type] || 'Other') + '</td>';
+        html += '<td class="cell-muted">' + (ev.event_date ? esc(fmtDate(ev.event_date)) : 'TBD') + '</td>';
+        html += '<td><span class="badge ev-' + esc(ev.status) + '">' + esc(EVENT_STATUSES[ev.status] || ev.status) + '</span></td>';
+        html += '<td class="cell-num">' + confirmed + ' / ' + atts.length + '</td>';
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+    }
+    html += '</div></div></div>';
+
+    root.innerHTML = html;
+    document.getElementById('erAddEventBtn').addEventListener('click', function () { openEventModal(null); });
+    root.querySelectorAll('tr.clickable[data-event]').forEach(function (tr) {
+      tr.addEventListener('click', function () { openEventModal(tr.getAttribute('data-event')); });
+    });
+  }
+
+  // ---------- Event modal ----------
+  function openEventModal(eventId) {
+    var isNew = !eventId;
+    var ev = isNew ? { title: '', event_type: 'career_fair', event_date: '', location: '', description: '', status: 'planning' } : eventById(eventId);
+    if (!ev) return;
+
+    var html = '<div class="modal"><div class="modal-header"><div class="modal-header-left">';
+    html += '<div class="modal-icon forest">' + ICONS.calendar + '</div>';
+    html += '<div class="modal-title"><h2>' + (isNew ? 'Add event' : esc(ev.title)) + '</h2><p>' + (isNew ? 'Create a new event' : esc(EVENT_TYPES[ev.event_type] || '') + (ev.event_date ? ' \u00b7 ' + esc(fmtDate(ev.event_date)) : '')) + '</p></div>';
+    html += '</div><button class="modal-close" data-close>' + ICONS.close + '</button></div>';
+    html += '<div class="modal-body">';
+
+    html += '<div class="form-grid">';
+    html += '<div class="form-field full"><label for="evTitle">Event title</label><input id="evTitle" type="text" value="' + esc(ev.title) + '"></div>';
+    html += formSelect('evType', 'Type', Object.keys(EVENT_TYPES).map(function (k) { return { v: k, l: EVENT_TYPES[k] }; }), ev.event_type);
+    html += formSelect('evStatus', 'Status', Object.keys(EVENT_STATUSES).map(function (k) { return { v: k, l: EVENT_STATUSES[k] }; }), ev.status);
+    html += '<div class="form-field"><label for="evDate">Date</label><input id="evDate" type="date" value="' + esc(ev.event_date || '') + '"></div>';
+    html += formField('evLocation', 'Location', 'input', ev.location);
+    html += '<div class="form-field full"><label for="evDesc">Description</label><textarea id="evDesc">' + esc(ev.description || '') + '</textarea></div>';
+    html += '</div>';
+
+    if (!isNew) {
+      var atts = attendeesFor(eventId);
+      html += '<div class="detail-section"><div class="detail-section-head"><h3>Attendees<span class="count">' + atts.length + '</span></h3></div>';
+      html += '<div class="attendee-add">' + ICONS.search + '<input type="text" id="evAttSearch" placeholder="Search companies or contacts to add" autocomplete="off"><div class="typeahead-menu" id="evAttMenu"></div></div>';
+      if (!atts.length) {
+        html += '<div class="empty-inline" id="evAttEmpty">No attendees yet. Search your companies and contacts above to attach them.</div>';
+      } else {
+        atts.forEach(function (a) {
+          if (a.employer_id) {
+            var ae = employerById(a.employer_id);
+            if (!ae) return;
+            html += '<div class="attendee-row">';
+            html += '<div class="entity-avatar" style="width:36px;height:36px;font-size:12px;">' + esc(initials(ae.name)) + '</div>';
+            html += '<div class="contact-main"><div class="contact-name">' + esc(ae.name) + '</div><div class="contact-meta">Company' + (ae.industry ? ' \u00b7 ' + esc(ae.industry) : '') + '</div></div>';
+          } else {
+            var c = contactById(a.contact_id);
+            if (!c) return;
+            var emp = employerById(c.employer_id);
+            html += '<div class="attendee-row">';
+            html += '<div class="contact-avatar">' + esc(initials(c.name)) + '</div>';
+            html += '<div class="contact-main"><div class="contact-name">' + esc(c.name) + '</div><div class="contact-meta">' + esc(c.title || '') + (emp ? ' \u00b7 ' + esc(emp.name) : '') + '</div></div>';
+          }
+          html += '<select data-att-status="' + esc(a.id) + '">' + Object.keys(ATT_STATUSES).map(function (k) { return '<option value="' + k + '"' + (a.status === k ? ' selected' : '') + '>' + ATT_STATUSES[k] + '</option>'; }).join('') + '</select>';
+          html += '<button class="icon-btn danger" data-del-att="' + esc(a.id) + '" title="Remove attendee">' + ICONS.trash + '</button>';
+          html += '</div>';
+        });
+      }
+      html += '</div>';
+    } else {
+      html += '<div class="form-hint" style="margin-top:14px;">Save the event first, then attach contacts as attendees.</div>';
+    }
+
+    html += '</div><div class="modal-footer">';
+    if (!isNew) html += '<button class="btn btn-danger-outline" id="evDelete">' + ICONS.trash + 'Delete event</button>';
+    html += '<button class="btn btn-secondary" data-close>Cancel</button>';
+    html += '<button class="btn btn-primary" id="evSave">' + (isNew ? 'Add event' : 'Save changes') + '</button>';
+    html += '</div></div>';
+
+    openModal(html);
+
+    document.getElementById('evSave').addEventListener('click', withBusy(async function () {
+      var title = document.getElementById('evTitle').value.trim();
+      if (!title) { toast('Event title is required'); return; }
+      var rec = {
+        title: title,
+        event_type: document.getElementById('evType').value,
+        status: document.getElementById('evStatus').value,
+        event_date: document.getElementById('evDate').value || null,
+        location: document.getElementById('evLocation').value.trim(),
+        description: document.getElementById('evDesc').value.trim()
+      };
+      if (isNew) {
+        rec.organization_id = LIVE ? currentUser.organization_id : 'org-demo';
+        var newId = await erApi.createEvent(rec);
+        toast('Event added');
+        closeModal();
+        await refresh();
+        openEventModal(newId);
+      } else {
+        await erApi.updateEvent(eventId, rec);
+        toast('Changes saved');
+        closeModal();
+        await refresh();
+      }
+    }));
+
+    if (!isNew) {
+      document.getElementById('evDelete').addEventListener('click', withBusy(async function () {
+        if (!confirm('Delete ' + ev.title + '? This removes its attendee list.')) return;
+        await erApi.deleteEvent(eventId);
+        toast('Event deleted');
+        closeModal();
+        await refresh();
+      }));
+
+      document.querySelectorAll('[data-att-status]').forEach(function (sel) {
+        sel.addEventListener('change', function () {
+          var aid = sel.getAttribute('data-att-status');
+          var val = sel.value;
+          sel.disabled = true;
+          erApi.setAttendeeStatus(aid, val).then(function () {
+            toast('Attendee updated');
+            return refresh();
+          }).catch(function (e) {
+            toast(errMsg(e));
+            return refresh().then(function () { openEventModal(eventId); });
+          }).finally(function () { sel.disabled = false; });
+        });
+      });
+      document.querySelectorAll('[data-del-att]').forEach(function (b) {
+        b.addEventListener('click', withBusy(async function () {
+          await erApi.removeAttendee(b.getAttribute('data-del-att'));
+          toast('Attendee removed');
+          await refresh();
+          openEventModal(eventId);
+        }));
+      });
+
+      // Typeahead over companies and contacts
+      var input = document.getElementById('evAttSearch');
+      var menu = document.getElementById('evAttMenu');
+      input.addEventListener('input', function () {
+        var q = input.value.trim().toLowerCase();
+        if (!q) { menu.classList.remove('open'); menu.innerHTML = ''; return; }
+        var atts2 = attendeesFor(eventId);
+        var attachedContacts = atts2.map(function (a) { return a.contact_id; }).filter(Boolean);
+        var attachedEmployers = atts2.map(function (a) { return a.employer_id; }).filter(Boolean);
+        var empMatches = employers.filter(function (e2) {
+          return attachedEmployers.indexOf(e2.id) === -1 && e2.name.toLowerCase().indexOf(q) !== -1;
+        }).slice(0, 4);
+        var conMatches = contacts.filter(function (c) {
+          if (attachedContacts.indexOf(c.id) !== -1) return false;
+          var emp = employerById(c.employer_id);
+          return c.name.toLowerCase().indexOf(q) !== -1 || (emp && emp.name.toLowerCase().indexOf(q) !== -1);
+        }).slice(0, 6);
+        if (!empMatches.length && !conMatches.length) {
+          menu.innerHTML = '<div class="typeahead-empty">No matching companies or contacts. Add them under Employers first.</div>';
+        } else {
+          var items = '';
+          empMatches.forEach(function (e2) {
+            items += '<div class="typeahead-item" data-pick-emp="' + esc(e2.id) + '"><div class="entity-avatar" style="width:30px;height:30px;font-size:11px;">' + esc(initials(e2.name)) + '</div><div><div class="t-name">' + esc(e2.name) + '</div><div class="t-sub">Company' + (e2.industry ? ' \u00b7 ' + esc(e2.industry) : '') + '</div></div></div>';
+          });
+          conMatches.forEach(function (c) {
+            var emp = employerById(c.employer_id);
+            items += '<div class="typeahead-item" data-pick="' + esc(c.id) + '"><div class="contact-avatar" style="width:30px;height:30px;font-size:11px;">' + esc(initials(c.name)) + '</div><div><div class="t-name">' + esc(c.name) + '</div><div class="t-sub">' + esc(c.title || '') + (emp ? ' \u00b7 ' + esc(emp.name) : '') + '</div></div></div>';
+          });
+          menu.innerHTML = items;
+          menu.querySelectorAll('[data-pick-emp]').forEach(function (item) {
+            item.addEventListener('click', withBusy(async function () {
+              await erApi.addAttendee({ event_id: eventId, contact_id: null, employer_id: item.getAttribute('data-pick-emp'), status: 'invited', organization_id: LIVE ? currentUser.organization_id : 'org-demo' });
+              toast('Company added to event');
+              await refresh();
+              openEventModal(eventId);
+            }));
+          });
+          menu.querySelectorAll('[data-pick]').forEach(function (item) {
+            item.addEventListener('click', withBusy(async function () {
+              await erApi.addAttendee({ event_id: eventId, contact_id: item.getAttribute('data-pick'), employer_id: null, status: 'invited', organization_id: LIVE ? currentUser.organization_id : 'org-demo' });
+              toast('Attendee added');
+              await refresh();
+              openEventModal(eventId);
+            }));
+          });
+        }
+        menu.classList.add('open');
+      });
+      document.addEventListener('click', function hideMenu(e) {
+        if (!menu.contains(e.target) && e.target !== input) {
+          menu.classList.remove('open');
+          document.removeEventListener('click', hideMenu);
+        }
+      });
+    }
+  }
+
+  // ---------- Navigation ----------
+  function switchView(view) {
+    state.view = view;
+    document.querySelectorAll('.nav-item[data-view]').forEach(function (n) {
+      n.classList.toggle('active', n.getAttribute('data-view') === view);
+    });
+    document.getElementById('erViewEmployers').style.display = view === 'employers' ? '' : 'none';
+    document.getElementById('erViewEvents').style.display = view === 'events' ? '' : 'none';
+    document.getElementById('erSidebar').classList.remove('mobile-open');
+  }
+
+  function renderAll() {
+    renderEmployers();
+    renderEvents();
+    document.getElementById('erNavEmployerCount').textContent = employers.length;
+    document.getElementById('erNavEventCount').textContent = events.length;
+  }
+
+  // ---------- Data layer ----------
+  function nn(v) { var s = (v === null || v === undefined) ? '' : String(v).trim(); return s ? s : null; }
+  function meId() { return LIVE ? currentUser.id : 'u-amy'; }
+
+  async function loadAllData() {
+    var sb = supabaseClient, orgId = currentUser.organization_id;
+    var res = await Promise.all([
+      sb.from('employers').select('*').eq('organization_id', orgId).order('name'),
+      sb.from('employer_contacts').select('*').eq('organization_id', orgId).order('name'),
+      sb.from('employer_interactions').select('*').eq('organization_id', orgId).order('interaction_date', { ascending: false }),
+      sb.from('employer_events').select('*').eq('organization_id', orgId).order('event_date', { ascending: true, nullsFirst: false }),
+      sb.from('employer_event_attendees').select('*').eq('organization_id', orgId),
+      sb.from('profiles').select('id, full_name, email').eq('organization_id', orgId).eq('is_org_admin', true).order('full_name')
+    ]);
+    for (var i = 0; i < res.length; i++) { if (res[i].error) throw res[i].error; }
+    employers = res[0].data || [];
+    contacts = res[1].data || [];
+    interactions = res[2].data || [];
+    events = res[3].data || [];
+    attendees = res[4].data || [];
+    OWNERS = (res[5].data || []).map(function (p) { return { id: p.id, name: p.full_name || p.email }; });
+  }
+
+  async function refresh() {
+    if (LIVE) await loadAllData();
+    renderAll();
+  }
+
+  async function dbInsert(table, row) {
+    var r = await supabaseClient.from(table).insert(row).select().single();
+    if (r.error) throw r.error;
+    return r.data;
+  }
+  async function dbUpdate(table, id, patch) {
+    var r = await supabaseClient.from(table).update(patch).eq('id', id).select().single();
+    if (r.error) throw r.error;
+    return r.data;
+  }
+  async function dbDelete(table, id) {
+    var r = await supabaseClient.from(table).delete().eq('id', id);
+    if (r.error) throw r.error;
+  }
+
+  var erApi = {
+    createEmployer: async function (rec, poc) {
+      if (!LIVE) {
+        rec.id = uid('e');
+        employers.push(rec);
+        if (poc) { poc.id = uid('c'); poc.employer_id = rec.id; contacts.push(poc); }
+        return rec.id;
+      }
+      var row = await dbInsert('employers', {
+        organization_id: currentUser.organization_id,
+        name: rec.name, industry: nn(rec.industry), location: nn(rec.location),
+        website: nn(rec.website), relationship_stage: rec.relationship_stage,
+        owner_user_id: rec.owner_user_id || null, tags: rec.tags || [], notes: nn(rec.notes)
+      });
+      if (poc) {
+        await dbInsert('employer_contacts', {
+          employer_id: row.id, organization_id: currentUser.organization_id,
+          name: poc.name, title: nn(poc.title), email: nn(poc.email), phone: nn(poc.phone),
+          linkedin_url: nn(poc.linkedin_url), owner_user_id: poc.owner_user_id || null, notes: nn(poc.notes)
+        });
+      }
+      return row.id;
+    },
+    updateEmployer: async function (id, rec) {
+      if (!LIVE) {
+        var e = employerById(id);
+        Object.keys(rec).forEach(function (k) { e[k] = rec[k]; });
+        return;
+      }
+      await dbUpdate('employers', id, {
+        name: rec.name, industry: nn(rec.industry), location: nn(rec.location),
+        website: nn(rec.website), relationship_stage: rec.relationship_stage,
+        owner_user_id: rec.owner_user_id || null, tags: rec.tags || [], notes: nn(rec.notes)
+      });
+    },
+    deleteEmployer: async function (id) {
+      if (!LIVE) {
+        var cids = contactsFor(id).map(function (c) { return c.id; });
+        employers = employers.filter(function (x) { return x.id !== id; });
+        contacts = contacts.filter(function (c) { return c.employer_id !== id; });
+        interactions = interactions.filter(function (x) { return x.employer_id !== id; });
+        attendees = attendees.filter(function (a) { return a.employer_id !== id && cids.indexOf(a.contact_id) === -1; });
+        return;
+      }
+      await dbDelete('employers', id); // FKs cascade contacts, interactions, attendee rows
+    },
+    createContact: async function (empId, rec) {
+      if (!LIVE) {
+        rec.id = uid('c'); rec.employer_id = empId; contacts.push(rec); return rec.id;
+      }
+      var row = await dbInsert('employer_contacts', {
+        employer_id: empId, organization_id: currentUser.organization_id,
+        name: rec.name, title: nn(rec.title), email: nn(rec.email), phone: nn(rec.phone),
+        linkedin_url: nn(rec.linkedin_url), owner_user_id: rec.owner_user_id || null, notes: nn(rec.notes)
+      });
+      return row.id;
+    },
+    updateContact: async function (id, rec) {
+      if (!LIVE) {
+        var c = contactById(id);
+        Object.keys(rec).forEach(function (k) { c[k] = rec[k]; });
+        return;
+      }
+      await dbUpdate('employer_contacts', id, {
+        name: rec.name, title: nn(rec.title), email: nn(rec.email), phone: nn(rec.phone),
+        linkedin_url: nn(rec.linkedin_url), owner_user_id: rec.owner_user_id || null, notes: nn(rec.notes)
+      });
+    },
+    deleteContact: async function (id) {
+      if (!LIVE) {
+        contacts = contacts.filter(function (x) { return x.id !== id; });
+        interactions.forEach(function (x) { if (x.contact_id === id) x.contact_id = null; });
+        attendees = attendees.filter(function (a) { return a.contact_id !== id; });
+        return;
+      }
+      await dbDelete('employer_contacts', id); // interactions.contact_id set null, attendee rows cascade
+    },
+    logInteraction: async function (rec) {
+      if (!LIVE) {
+        rec.id = uid('x'); rec.logged_by = meId(); interactions.push(rec); return;
+      }
+      await dbInsert('employer_interactions', {
+        employer_id: rec.employer_id, contact_id: rec.contact_id || null,
+        organization_id: currentUser.organization_id,
+        interaction_type: rec.interaction_type, interaction_date: rec.interaction_date,
+        note: nn(rec.note), logged_by: currentUser.id
+      });
+    },
+    createEvent: async function (rec) {
+      if (!LIVE) {
+        rec.id = uid('ev'); rec.created_by = meId(); events.push(rec); return rec.id;
+      }
+      var row = await dbInsert('employer_events', {
+        organization_id: currentUser.organization_id,
+        title: rec.title, event_type: rec.event_type, status: rec.status,
+        event_date: rec.event_date || null, location: nn(rec.location),
+        description: nn(rec.description), created_by: currentUser.id
+      });
+      return row.id;
+    },
+    updateEvent: async function (id, rec) {
+      if (!LIVE) {
+        var ev = eventById(id);
+        Object.keys(rec).forEach(function (k) { ev[k] = rec[k]; });
+        return;
+      }
+      await dbUpdate('employer_events', id, {
+        title: rec.title, event_type: rec.event_type, status: rec.status,
+        event_date: rec.event_date || null, location: nn(rec.location), description: nn(rec.description)
+      });
+    },
+    deleteEvent: async function (id) {
+      if (!LIVE) {
+        events = events.filter(function (x) { return x.id !== id; });
+        attendees = attendees.filter(function (a) { return a.event_id !== id; });
+        return;
+      }
+      await dbDelete('employer_events', id); // attendee rows cascade
+    },
+    addAttendee: async function (row) {
+      if (!LIVE) {
+        row.id = uid('a'); attendees.push(row); return;
+      }
+      await dbInsert('employer_event_attendees', {
+        event_id: row.event_id, contact_id: row.contact_id || null,
+        employer_id: row.employer_id || null,
+        organization_id: currentUser.organization_id, status: row.status || 'invited'
+      });
+    },
+    setAttendeeStatus: async function (id, status) {
+      if (!LIVE) {
+        var a = attendees.filter(function (x) { return x.id === id; })[0];
+        if (a) a.status = status;
+        return;
+      }
+      var r = await supabaseClient.from('employer_event_attendees').update({ status: status }).eq('id', id);
+      if (r.error) throw r.error;
+    },
+    removeAttendee: async function (id) {
+      if (!LIVE) {
+        attendees = attendees.filter(function (a) { return a.id !== id; });
+        return;
+      }
+      await dbDelete('employer_event_attendees', id);
+    }
+  };
+
+  async function bootLive() {
+    gateShow('loading', { title: 'Connecting', body: 'Verifying session.' });
+    if (!window.supabase || !window.supabase.createClient) {
+      return gateShow('error', { title: 'Could not load Supabase', body: 'The supabase-js library failed to load. Check your connection and refresh.' });
+    }
+    try {
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: { persistSession: true, autoRefreshToken: true }
+      });
+    } catch (e) {
+      return gateShow('error', { title: 'Could not initialize Supabase', body: String(e && e.message || e) });
+    }
+
+    var sessionRes = await supabaseClient.auth.getSession();
+    if (sessionRes.error) return gateShow('error', { title: 'Auth error', body: sessionRes.error.message });
+    var session = sessionRes.data && sessionRes.data.session;
+    if (!session) {
+      return gateShow('warn', {
+        title: 'Sign in required',
+        body: 'You need to sign in to access Employer Relations.',
+        actions: [{ label: 'Go to sign in', onClick: function () { window.location.href = 'https://www.clover-path.com/login'; } }]
+      });
+    }
+
+    var profRes = await supabaseClient.from('profiles')
+      .select('id, email, full_name, organization_id, is_org_admin')
+      .eq('id', session.user.id).maybeSingle();
+    if (profRes.error) return gateShow('error', { title: 'Could not load profile', body: profRes.error.message });
+    var profile = profRes.data;
+    if (!profile) {
+      return gateShow('error', {
+        title: 'No profile found',
+        body: 'Your account does not have a CloverPath profile. Contact support.',
+        actions: [{ label: 'Sign out', onClick: signOut }]
+      });
+    }
+    if (profile.is_org_admin !== true) {
+      return gateShow('warn', {
+        title: 'Access denied',
+        body: 'Employer Relations is available to organization admins only. If you should have access, contact your career services lead.',
+        actions: [
+          { label: 'Sign out', onClick: signOut },
+          { label: 'Go to student dashboard', secondary: true, onClick: function () { window.location.href = 'https://app.clover-path.com/'; } }
+        ]
+      });
+    }
+    if (!profile.organization_id) {
+      return gateShow('error', {
+        title: 'No organization linked',
+        body: 'Your admin profile is not attached to an organization. Contact CloverPath support to be assigned.',
+        actions: [{ label: 'Sign out', onClick: signOut }]
+      });
+    }
+    currentUser = profile;
+
+    // Feature flag: UX-level check. RLS is the real boundary; missing key
+    // fails open to match auth_caller_feature semantics.
+    try {
+      var featRes = await supabaseClient.rpc('get_my_features');
+      var feats = featRes && featRes.data ? featRes.data : null;
+      if (feats && feats.employer_relations === false) {
+        return gateShow('warn', {
+          title: 'Not enabled',
+          body: 'Employer Relations is not enabled for your organization. Contact CloverPath to turn it on.',
+          actions: [{ label: 'Back to dashboard', onClick: function () { window.location.href = 'https://app.clover-path.com/'; } }]
+        });
+      }
+    } catch (e) { /* fail open */ }
+
+    var orgRes = await supabaseClient.from('organizations').select('id, name').eq('id', profile.organization_id).maybeSingle();
+    currentOrg = (orgRes && orgRes.data) ? orgRes.data : null;
+
+    gateShow('loading', { title: 'Loading Employer Relations', body: 'Fetching your employer network.' });
+    try {
+      await loadAllData();
+    } catch (e) {
+      return gateShow('error', { title: 'Could not load data', body: errMsg(e) });
+    }
+
+    // Chrome personalization
+    var nm = profile.full_name || profile.email || 'Admin';
+    document.getElementById('erProfileName').textContent = nm;
+    document.getElementById('erProfileAvatar').textContent = initials(nm);
+    var foot = document.querySelector('.sidebar-footer');
+    if (foot) foot.textContent = currentOrg && currentOrg.name ? currentOrg.name : 'Employer Relations';
+
+    renderAll();
+    switchView('employers');
+    gateHide();
+  }
+
+  // ---------- Boot ----------
+  document.querySelectorAll('.nav-item[data-view]').forEach(function (n) {
+    n.addEventListener('click', function () { switchView(n.getAttribute('data-view')); });
+  });
+  document.getElementById('erMobileMenuBtn').addEventListener('click', function () {
+    document.getElementById('erSidebar').classList.toggle('mobile-open');
+  });
+
+  if (LIVE) {
+    bootLive();
+  } else {
+    gateHide();
+    renderAll();
+    switchView('employers');
+  }
+})();
+
+  </script>
+</body>
+</html>
